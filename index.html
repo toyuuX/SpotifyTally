@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tally – your Spotify stats</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700;800&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#14172b;--surface:#1e2340;--line:#2f3560;--text:#eef0ff;--muted:#9aa0cc;--hot:#ff9d3d;--cool:#8e9bff;
+--head:'Bricolage Grotesque',system-ui,sans-serif;--body:'DM Sans',system-ui,sans-serif}
+*{box-sizing:border-box;margin:0}
+html{background:var(--bg);color:var(--text);font:400 16px/1.5 var(--body)}
+body{max-width:980px;margin:0 auto;padding:24px 20px 80px}
+h1,h2,h3{font-family:var(--head);line-height:1.05}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:3px solid var(--cool);outline-offset:2px}
+.hidden{display:none!important}
+/* login */
+#login{min-height:80vh;display:flex;flex-direction:column;justify-content:center;gap:24px;max-width:640px}
+#login h1{font-size:clamp(3rem,12vw,6.5rem);font-weight:800;letter-spacing:-.04em}
+#login p{color:var(--muted);font-size:1.125rem;max-width:44ch}
+.btn{background:var(--hot);color:#2a1700;border:0;border-radius:999px;padding:14px 28px;font-weight:500;width:max-content}
+.btn:hover{filter:brightness(1.08)}
+.ghost{background:none;border:1px solid var(--line);border-radius:999px;padding:6px 14px;color:var(--muted)}
+.ghost:hover{color:var(--text);border-color:var(--cool)}
+#err{color:#ffb4a8;margin-top:8px}
+/* header */
+header{display:flex;align-items:center;gap:12px;margin-bottom:32px}
+header .brand{font:800 1.5rem var(--head);letter-spacing:-.03em;margin-right:auto}
+header img{width:36px;height:36px;border-radius:50%;object-fit:cover}
+/* range */
+.range{display:inline-flex;border:1px solid var(--line);border-radius:999px;padding:4px;margin-bottom:28px}
+.range button{background:none;border:0;border-radius:999px;padding:8px 18px;color:var(--muted)}
+.range button[aria-pressed=true]{background:var(--cool);color:#10143a;font-weight:500}
+/* hero */
+.hero{display:grid;grid-template-columns:minmax(0,260px) 1fr;gap:32px;align-items:end;margin-bottom:48px}
+.hero img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:6px;box-shadow:14px 14px 0 var(--hot)}
+.hero small{color:var(--muted)}
+.hero h2{font-size:clamp(2.2rem,6vw,4.5rem);font-weight:800;letter-spacing:-.03em;margin:6px 0 10px}
+.hero p{color:var(--muted)}
+.facts{display:flex;flex-wrap:wrap;gap:10px 28px;margin-top:20px}
+.facts b{display:block;font:700 1.5rem var(--head);color:var(--hot)}
+.facts span{color:var(--muted);font-size:.875rem}
+/* sections */
+section{margin-bottom:48px}
+section>h3{font-size:1.75rem;margin-bottom:16px}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:40px}
+ol{list-style:none;padding:0}
+.row{display:grid;grid-template-columns:2rem 48px 1fr;gap:14px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
+.row .n{font:700 1.1rem var(--head);color:var(--muted);text-align:right}
+.row img{width:48px;height:48px;object-fit:cover;border-radius:4px;background:var(--surface)}
+.row .t{font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row .s{color:var(--muted);font-size:.875rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row a{color:inherit;text-decoration:none}.row a:hover{text-decoration:underline}
+.artists{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:20px}
+.artists figure{text-align:center}
+.artists img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:50%;background:var(--surface)}
+.artists figcaption{margin-top:8px;font-weight:500;font-size:.9rem}
+.bars div{display:grid;grid-template-columns:130px 1fr;gap:12px;align-items:center;margin-bottom:10px;font-size:.9rem}
+.bars i{display:block;height:14px;border-radius:2px;background:linear-gradient(90deg,var(--cool),var(--hot))}
+.bars span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.note{color:var(--muted)}
+@media(max-width:640px){.hero{grid-template-columns:1fr}.hero img{max-width:240px}}
+@media(prefers-reduced-motion:no-preference){.hero img{animation:drop .5s ease-out}@keyframes drop{from{transform:translate(-10px,-10px);box-shadow:24px 24px 0 var(--hot)}}}
+</style>
+</head>
+<body>
+
+<main id="login" class="hidden">
+  <h1>Tally</h1>
+  <p>Sign in with Spotify to see your top songs, artists and genres, and what you played most recently.</p>
+  <button class="btn" id="loginBtn">Sign in with Spotify</button>
+  <div id="err" role="alert"></div>
+</main>
+
+<div id="app" class="hidden">
+  <header>
+    <span class="brand">Tally</span>
+    <img id="avatar" alt="" class="hidden">
+    <span id="who"></span>
+    <button class="ghost" id="logout">Sign out</button>
+  </header>
+
+  <div class="range" role="group" aria-label="Time range">
+    <button data-r="short_term" aria-pressed="false">4 weeks</button>
+    <button data-r="medium_term" aria-pressed="true">6 months</button>
+    <button data-r="long_term" aria-pressed="false">All time</button>
+  </div>
+
+  <div id="stats"></div>
+</div>
+
+<script>
+// ---- Setup: paste your Client ID from developer.spotify.com/dashboard ----
+const CLIENT_ID = 'YOUR_SPOTIFY_CLIENT_ID';
+// Must match a Redirect URI you added in the Spotify dashboard exactly.
+const REDIRECT = location.origin + location.pathname;
+const SCOPES = 'user-top-read user-read-recently-played';
+
+const $ = s => document.querySelector(s);
+const ls = {
+  get: k => { try { return localStorage.getItem(k); } catch { return null; } },
+  set: (k, v) => { try { localStorage.setItem(k, v); } catch {} },
+  del: k => { try { localStorage.removeItem(k); } catch {} }
+};
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const b64url = buf => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+const randomStr = n => b64url(crypto.getRandomValues(new Uint8Array(n)));
+const img = o => (o?.images?.[1] || o?.images?.[0] || {}).url || '';
+
+// ---- Auth (PKCE, no server needed) ----
+async function login() {
+  if (CLIENT_ID.startsWith('YOUR_')) { $('#err').textContent = 'Add your Spotify Client ID at the top of the script first.'; return; }
+  const verifier = randomStr(64);
+  const challenge = b64url(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(verifier)));
+  ls.set('verifier', verifier);
+  const p = new URLSearchParams({ client_id: CLIENT_ID, response_type: 'code', redirect_uri: REDIRECT,
+    scope: SCOPES, code_challenge_method: 'S256', code_challenge: challenge });
+  location.href = 'https://accounts.spotify.com/authorize?' + p;
+}
+
+async function tokenRequest(body) {
+  const r = await fetch('https://accounts.spotify.com/api/token', {
+    method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({ client_id: CLIENT_ID, ...body })
+  });
+  const d = await r.json();
+  if (!r.ok) throw new Error(d.error_description || 'Sign-in failed.');
+  ls.set('access', d.access_token);
+  ls.set('expires', Date.now() + d.expires_in * 1000);
+  if (d.refresh_token) ls.set('refresh', d.refresh_token);
+}
+
+async function getToken() {
+  if (Date.now() > Number(ls.get('expires') || 0) - 60000) {
+    const refresh = ls.get('refresh');
+    if (!refresh) return null;
+    await tokenRequest({ grant_type: 'refresh_token', refresh_token: refresh });
+  }
+  return ls.get('access');
+}
+
+function logout() { ['access','expires','refresh','verifier'].forEach(ls.del); location.href = REDIRECT; }
+
+async function api(path) {
+  const t = await getToken();
+  if (!t) throw new Error('auth');
+  const r = await fetch('https://api.spotify.com/v1' + path, { headers: { Authorization: 'Bearer ' + t } });
+  if (r.status === 401) throw new Error('auth');
+  if (r.status === 403) throw new Error('Spotify refused access. If your app is in development mode, add this account under User Management in the dashboard.');
+  if (r.status === 429) throw new Error('Spotify is rate limiting requests. Try again in a minute.');
+  if (!r.ok) throw new Error('Spotify returned an error (' + r.status + ').');
+  return r.json();
+}
+
+// ---- Data + rendering ----
+let range = 'medium_term', recent = null;
+
+function trackRow(t, i, extra) {
+  return `<li class="row"><span class="n">${i ? i : ''}</span>
+    <img src="${esc(img(t.album))}" alt="" loading="lazy">
+    <div style="min-width:0"><div class="t"><a href="${esc(t.external_urls?.spotify)}" target="_blank" rel="noopener">${esc(t.name)}</a></div>
+    <div class="s">${esc(t.artists.map(a => a.name).join(', '))}${extra ? ' · ' + extra : ''}</div></div></li>`;
+}
+
+function ago(iso) {
+  const m = Math.round((Date.now() - new Date(iso)) / 60000);
+  if (m < 60) return m + ' min ago';
+  if (m < 1440) return Math.round(m / 60) + ' h ago';
+  return Math.round(m / 1440) + ' d ago';
+}
+
+async function load() {
+  const out = $('#stats');
+  out.innerHTML = '<p class="note">Loading your stats…</p>';
+  try {
+    const [tracks, artists] = await Promise.all([
+      api(`/me/top/tracks?time_range=${range}&limit=50`),
+      api(`/me/top/artists?time_range=${range}&limit=50`)
+    ]);
+    if (!recent) recent = await api('/me/player/recently-played?limit=20');
+
+    const T = tracks.items, A = artists.items;
+    if (!T.length) { out.innerHTML = '<p class="note">Not enough listening history for this range yet. Play some music and check back.</p>'; return; }
+
+    // genres weighted by artist rank
+    const g = {};
+    A.forEach((a, i) => (a.genres || []).forEach(x => g[x] = (g[x] || 0) + (A.length - i)));
+    const genres = Object.entries(g).sort((a, b) => b[1] - a[1]).slice(0, 8);
+    const max = genres.length ? genres[0][1] : 1;
+
+    const pops = T.map(t => t.popularity).filter(Number.isFinite);
+    const avgPop = pops.length ? Math.round(pops.reduce((a, b) => a + b, 0) / pops.length) : null;
+    const distinct = new Set(T.flatMap(t => t.artists.map(a => a.id))).size;
+    const top = T[0];
+
+    out.innerHTML = `
+      <div class="hero">
+        <img src="${esc(img(top.album))}" alt="Cover of ${esc(top.album.name)}">
+        <div>
+          <small>Your most played song</small>
+          <h2>${esc(top.name)}</h2>
+          <p>${esc(top.artists.map(a => a.name).join(', '))} · ${esc(top.album.name)}</p>
+          <div class="facts">
+            <div><b>${distinct}</b><span>artists across your top ${T.length} songs</span></div>
+            ${genres[0] ? `<div><b>${esc(genres[0][0])}</b><span>top genre</span></div>` : ''}
+            ${avgPop !== null ? `<div><b>${avgPop}/100</b><span>average song popularity</span></div>` : ''}
+          </div>
+        </div>
+      </div>
+      <section class="cols">
+        <div><h3>Top songs</h3><ol>${T.slice(0, 20).map((t, i) => trackRow(t, i + 1)).join('')}</ol></div>
+        <div><h3>Recently played</h3><ol>${recent.items.map(i => trackRow(i.track, 0, ago(i.played_at))).join('')}</ol></div>
+      </section>
+      <section><h3>Top artists</h3><div class="artists">
+        ${A.slice(0, 12).map(a => `<figure><img src="${esc(img(a))}" alt="" loading="lazy"><figcaption>${esc(a.name)}</figcaption></figure>`).join('')}
+      </div></section>
+      ${genres.length ? `<section><h3>Top genres</h3><div class="bars">
+        ${genres.map(([n, v]) => `<div><span>${esc(n)}</span><i style="width:${Math.max(4, v / max * 100)}%"></i></div>`).join('')}
+      </div></section>` : ''}`;
+  } catch (e) {
+    if (e.message === 'auth') return logout();
+    out.innerHTML = `<p id="err" role="alert">${esc(e.message)}</p>`;
+  }
+}
+
+async function showApp() {
+  $('#app').classList.remove('hidden');
+  try {
+    const me = await api('/me');
+    $('#who').textContent = me.display_name || '';
+    const a = img(me);
+    if (a) { $('#avatar').src = a; $('#avatar').classList.remove('hidden'); }
+  } catch (e) { if (e.message === 'auth') return logout(); }
+  load();
+}
+
+// ---- Boot ----
+document.querySelectorAll('.range button').forEach(b => b.onclick = () => {
+  range = b.dataset.r;
+  document.querySelectorAll('.range button').forEach(x => x.setAttribute('aria-pressed', x === b));
+  load();
+});
+$('#loginBtn').onclick = login;
+$('#logout').onclick = logout;
+
+(async function init() {
+  const q = new URLSearchParams(location.search);
+  if (q.get('error')) { history.replaceState({}, '', REDIRECT); $('#login').classList.remove('hidden'); $('#err').textContent = 'Spotify sign-in was cancelled.'; return; }
+  if (q.get('code')) {
+    try {
+      await tokenRequest({ grant_type: 'authorization_code', code: q.get('code'), redirect_uri: REDIRECT, code_verifier: ls.get('verifier') });
+      ls.del('verifier');
+    } catch (e) { history.replaceState({}, '', REDIRECT); $('#login').classList.remove('hidden'); $('#err').textContent = e.message; return; }
+    history.replaceState({}, '', REDIRECT);
+  }
+  if (ls.get('access') || ls.get('refresh')) showApp(); else $('#login').classList.remove('hidden');
+})();
+</script>
+</body>
+</html>
