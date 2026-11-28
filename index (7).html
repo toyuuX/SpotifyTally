@@ -1,0 +1,1426 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="theme-color" content="#00695c">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Tally">
+<title>Tally – your Spotify stats</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto+Flex:opsz,wdth,wght@8..144,25..151,100..1000&display=swap" rel="stylesheet">
+<style>
+:root{--surface-base:#f4faf6;--surface-elevated:#e8f0eb;--surface-interactive:#d5e5dc;--bg:var(--surface-base);--sf:var(--surface-elevated);--r-sm:14px;--r-md:24px;--r-lg:36px;--accent-dynamic:#00695c;--on-accent:#ffffff;--accent-text:#00695c;--on:#171d1a;--mut:#4f5b56;--pri:#00695c;--onpri:#fff;--pc:#b6f0e0;--onpc:#00201b;--sc:#ffdcc6;--onsc:#2e1500;--tc:#e6deff;--ontc:#1d1147;--line:#c3cdc7;
+--g0:#00897b;--g1:#f4731c;--g2:#7e57c2;--g3:#e5a100;--g4:#1e88e5;--g5:#d81b60;--g6:#43a047;--g7:#8d6e63;
+--spring:cubic-bezier(.34,1.56,.64,1);--font:'Roboto Flex',system-ui,sans-serif}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--surface-base:#0f1512;--surface-elevated:#19211d;--surface-interactive:#27322d;--accent-dynamic:#5fdbc6;--on-accent:#00382f;--accent-text:#5fdbc6;--on:#dfe4e0;--mut:#a1aca6;--pri:#5fdbc6;--onpri:#00382f;--pc:#005046;--onpc:#b6f0e0;--sc:#5a3318;--onsc:#ffdcc6;--tc:#3b2e6b;--ontc:#e6deff;--line:#3a4540;color-scheme:dark}}
+:root[data-theme=dark]{--surface-base:#0f1512;--surface-elevated:#19211d;--surface-interactive:#27322d;--accent-dynamic:#5fdbc6;--on-accent:#00382f;--accent-text:#5fdbc6;--on:#dfe4e0;--mut:#a1aca6;--pri:#5fdbc6;--onpri:#00382f;--pc:#005046;--onpc:#b6f0e0;--sc:#5a3318;--onsc:#ffdcc6;--tc:#3b2e6b;--ontc:#e6deff;--line:#3a4540;color-scheme:dark}
+*{box-sizing:border-box;margin:0}
+html{background:var(--bg);color:var(--on);font:400 16px/1.5 var(--font)}
+body{max-width:1000px;margin:0 auto;padding:20px 20px 80px}
+h1,h2,h3,b{font-weight:800;font-stretch:112%;letter-spacing:-.02em;line-height:1.05}
+button,label.btn{font:inherit;cursor:pointer}
+:focus-visible{outline:3px solid var(--pri);outline-offset:3px}
+.hidden{display:none!important}
+.btn{display:inline-block;background:var(--pri);color:var(--onpri);border:0;border-radius:28px;padding:14px 26px;font-weight:600;transition:border-radius .35s var(--spring),transform .35s var(--spring)}
+@media(hover:hover){.btn:hover{border-radius:16px}}.btn:active{transform:scale(.94);border-radius:10px}
+.btn.tonal{background:var(--pc);color:var(--onpc)}
+.btn.sm{padding:9px 18px;font-size:.9rem}
+#err{color:#ba1a1a;margin-top:10px}
+#login{min-height:85vh;display:flex;flex-direction:column;justify-content:center;gap:24px;max-width:620px}
+#login h1{font-size:clamp(4rem,18vw,8rem);color:var(--pri)}
+#login p{color:var(--mut);font-size:1.15rem;max-width:42ch}
+header{display:flex;align-items:center;gap:12px;margin-bottom:28px}
+header .brand{font:800 1.8rem var(--font);font-stretch:112%;color:var(--pri);margin-right:auto}
+header img{width:40px;height:40px;border-radius:50%;object-fit:cover}
+.range{position:relative;display:inline-flex;background:var(--sf);border-radius:999px;padding:5px;flex:0 1 auto;min-width:0}
+.range i{position:absolute;top:5px;bottom:5px;left:0;width:0;border-radius:999px;background:var(--accent-dynamic);transition:transform .55s var(--spring),width .55s var(--spring),background-color .6s}
+.range button{position:relative;background:none;border:0;border-radius:999px;padding:10px 20px;color:var(--mut);font-weight:500;transition:color .25s}
+.range button[aria-pressed=true]{color:var(--on-accent)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(190px,100%),1fr));gap:10px;margin-bottom:12px}
+.card{padding:16px 20px;display:flex;flex-direction:column;gap:4px;justify-content:space-between;min-height:112px;animation:pop .6s var(--spring) both;animation-delay:calc(var(--i,0)*70ms)}
+.card b{font-size:clamp(1.8rem,6vw,2.5rem);overflow-wrap:break-word}
+.card b[data-n],.card b:not([style]){white-space:nowrap;font-variant-numeric:tabular-nums}
+@media(max-width:480px){.card b[data-n]{font-size:clamp(1.6rem,8.2vw,2.2rem);letter-spacing:-.04em;font-stretch:100%}}
+.card small{font-size:.85rem;opacity:.8}
+.c1{background:var(--pc);color:var(--onpc);border-radius:36px 12px 36px 12px}
+.c2{background:var(--sc);color:var(--onsc);border-radius:12px 36px 12px 36px}
+.c3{background:var(--tc);color:var(--ontc);border-radius:36px}
+.c1 a{color:inherit;font-weight:600}
+.hero{display:grid;grid-template-columns:minmax(0,230px) 1fr;gap:28px;align-items:center;background:var(--sf);border-radius:48px;padding:24px;margin-bottom:40px;animation:pop .6s var(--spring) .2s both}
+.hero img,.hero .ph{width:100%;aspect-ratio:1;object-fit:cover;border-radius:36px;background:var(--line)}
+.hero img{position:relative;z-index:2;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-user-drag:none;cursor:grab;will-change:transform}
+.hero small{color:var(--mut)}
+.hero h2{font-size:clamp(2rem,5.5vw,3.6rem);margin:6px 0 8px}
+.hero p{color:var(--mut)}
+.chip{display:inline-block;background:var(--pri);color:var(--onpri);border-radius:999px;padding:5px 14px;font-weight:600;font-size:.9rem;margin-top:14px}
+section{margin-bottom:44px}
+section>h3{font-size:1.8rem;margin-bottom:14px}
+ol{list-style:none;padding:0;display:grid;gap:6px}
+@media(min-width:760px){ol.two{grid-template-columns:1fr 1fr;gap:6px 14px}}
+@property --tint{syntax:'<color>';inherits:true;initial-value:transparent}
+.row{--tint:transparent;transition:--tint .7s ease,border-radius .4s var(--spring),transform .4s var(--spring);background:linear-gradient(100deg,color-mix(in srgb,var(--tint) 30%,transparent),transparent 70%),color-mix(in srgb,var(--tint) 11%,var(--sf));display:block;padding:8px 14px 8px 8px;border-radius:20px;animation:rise .55s var(--spring) both;animation-delay:calc(var(--i)*16ms)}
+@media(hover:hover){.row:hover{border-radius:34px;transform:translateX(4px)}}
+.row .n{font:800 1.05rem/1 var(--font);font-stretch:112%;letter-spacing:-.04em;color:color-mix(in srgb,var(--pri) 45%,transparent);text-align:center;font-variant-numeric:tabular-nums}
+.row img,.row .ph{width:52px;height:52px;object-fit:cover;border-radius:14px;background:var(--line);transition:border-radius .4s var(--spring)}
+.row.open img,.row.open .ph{border-radius:50%}
+.row .t,.row .s{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row .t{font-weight:600}.row .s{color:var(--mut);font-size:.875rem}
+.row a{color:inherit;text-decoration:none}.row a:hover{text-decoration:underline}
+.row .pl{background:var(--pc);color:var(--onpc);border-radius:999px;padding:4px 12px;font-weight:700;font-size:.85rem;white-space:nowrap}
+.artists{display:grid;grid-template-columns:repeat(3,1fr);gap:16px 12px}
+@media(min-width:760px){.artists{grid-template-columns:repeat(auto-fill,minmax(112px,1fr))}}
+.bars div{display:grid;grid-template-columns:150px 1fr;gap:12px;align-items:center;margin-bottom:10px;font-size:.9rem}
+.bars i{display:block;height:20px;border-radius:999px;background:var(--pri);transform-origin:left;animation:grow .8s var(--spring) both;animation-delay:calc(var(--i)*60ms)}
+.bars span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.import{background:var(--tc);color:var(--ontc);border-radius:48px 14px 48px 14px;padding:28px;display:grid;gap:12px}
+.import h3{font-size:1.5rem;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.st{font:600 .78rem/1 var(--font);letter-spacing:.02em;padding:6px 11px 6px 9px;border-radius:999px;background:rgba(0,0,0,.09);display:inline-flex;align-items:center;gap:6px}
+.st::before{content:'';width:9px;height:9px;border-radius:50%;background:#8a948f}
+.st[data-s=on]::before{background:#1fa463;box-shadow:0 0 0 3px rgba(31,164,99,.25)}
+.st[data-s=bad]::before{background:#d93025;box-shadow:0 0 0 3px rgba(217,48,37,.25)}
+#import{background:var(--pc);color:var(--onpc);border-radius:48px 14px 48px 14px}
+#import .btn.tonal{background:var(--onpc);color:var(--pc)}
+#syncBox{background:var(--sc);color:var(--onsc);border-radius:14px 48px 14px 48px}
+#syncBox .btn.tonal{background:var(--onsc);color:var(--sc)}
+#lfmBox{border-radius:48px 48px 14px 14px}
+.import p{font-size:.95rem;max-width:62ch}
+.import a{color:inherit;font-weight:600}
+.import .acts{display:flex;gap:10px;flex-wrap:wrap}
+.note{color:var(--mut)}
+#bar{position:fixed;top:0;left:0;right:0;height:4px;background:var(--pri);transform:scaleX(0);transform-origin:left;transition:transform .4s cubic-bezier(.2,.8,.2,1),opacity .4s;opacity:0;z-index:9}
+header{flex-wrap:wrap}.upd{color:var(--mut);font-size:.65rem;line-height:1.15;text-align:center;white-space:pre-line}
+.lp{background:var(--sf);border-radius:36px 14px 36px 14px;padding:22px 24px;margin-bottom:20px;display:grid;gap:14px;overflow:hidden;max-height:1200px;animation:pop .5s var(--spring) both;transition:opacity .4s,transform .4s,max-height .5s,padding .5s,margin .5s}
+.lp.out{opacity:0;transform:scale(.96);max-height:0;padding-block:0;margin:0}
+.lh{display:flex;align-items:center;gap:12px}.lh h3{font-size:1.3rem}
+.spin{width:22px;height:22px;background:var(--pri);animation:morph 1.4s linear infinite}
+.lp ul{list-style:none;padding:0;display:grid;gap:9px}
+.lp li{display:grid;grid-template-columns:22px 1fr auto;gap:12px;align-items:center;color:var(--mut);transition:color .3s}
+.lp li.on,.lp li.done{color:var(--on)}
+.lp li em{font-style:normal;font-size:.85rem;color:var(--mut);opacity:0;transform:translateX(10px);transition:opacity .45s,transform .45s var(--spring)}
+.lp li.done em{opacity:1;transform:none}
+.ic{width:18px;height:18px;border-radius:50%;border:2px solid var(--line);justify-self:center;transition:background .3s,transform .4s var(--spring)}
+li.on .ic{border:0;background:var(--pri);animation:morph 1.4s linear infinite}
+li.done .ic{border:0;background:var(--pri);position:relative;transform:scale(1.15)}
+li.done .ic::after{content:'\2713';position:absolute;inset:0;display:grid;place-items:center;color:var(--onpri);font-size:.7rem;font-weight:800}
+.skg{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.sk{height:120px;border-radius:28px;background:linear-gradient(90deg,var(--bg) 30%,var(--line) 50%,var(--bg) 70%) 0 0/300% 100%;animation:shim 1.4s linear infinite}
+body.stale #stats{opacity:.4;pointer-events:none;transition:opacity .3s}
+@keyframes morph{0%{border-radius:50%;transform:rotate(0)}50%{border-radius:26%;transform:rotate(180deg) scale(.88)}100%{border-radius:50%;transform:rotate(360deg)}}
+@keyframes shim{to{background-position:-300% 0}}
+.c4{background:var(--tc);color:var(--ontc);border-radius:12px 36px 36px 12px}
+.rc{min-height:100px}.rc small:last-child{overflow-wrap:anywhere}
+.panel{background:var(--sf);border-radius:36px;padding:24px;animation:pop .6s var(--spring) both}
+.pn{display:block;font-size:clamp(1.8rem,5vw,2.6rem);color:var(--pri);margin-bottom:4px}
+.panel p{color:var(--mut);margin-bottom:18px}
+.two2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px}
+.bch{display:flex;align-items:flex-end;gap:4px;height:160px;padding-bottom:24px}
+.bc{flex:1;height:100%;display:flex;flex-direction:column;justify-content:flex-end;position:relative}
+.bc i{display:block;background:var(--pc);border-radius:10px 10px 4px 4px;transform-origin:bottom;animation:growY .7s var(--spring) both;animation-delay:calc(var(--i)*25ms);transition:background .2s}
+.bc.pk i,.bc:hover i{background:var(--pri)}
+.bc{cursor:pointer;-webkit-tap-highlight-color:transparent;outline-offset:2px}.bc.sel i{background:var(--pri)}.bch.hasel .bc:not(.sel) i{opacity:.5}.still .bc i,.still .panel{animation:none}
+.ro{margin-top:12px;border-radius:28px;padding:18px 22px}.ro p{color:var(--on);margin:0 0 12px}.ro .acts{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.ro .chp{margin:0}
+.np{display:flex;gap:14px;align-items:center;background:var(--pc);color:var(--onpc);border-radius:32px 12px 32px 12px;padding:12px 18px 12px 12px;margin-bottom:20px;text-decoration:none;animation:pop .5s var(--spring) both}
+.np img{width:64px;height:64px;border-radius:18px;object-fit:cover;flex:none;background:var(--line)}
+.np .nt{min-width:0;flex:1}.np .nl{font:700 .66rem var(--font);letter-spacing:.14em;text-transform:uppercase;display:flex;align-items:center;gap:8px}
+.np .tt{font-weight:700;margin-top:2px}.np .ta{opacity:.75;font-size:.875rem}.np .tt,.np .ta{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.np .pg{height:4px;border-radius:2px;background:color-mix(in srgb,currentColor 18%,transparent);margin-top:8px;overflow:hidden}.np .pg i{display:block;height:100%;background:currentColor;width:0;transition:width 1s linear}
+.eq{display:inline-flex;gap:2px;align-items:flex-end;height:12px}.eq i{width:3px;height:3px;background:currentColor;border-radius:2px;animation:eq .9s ease-in-out infinite}.eq i:nth-child(2){animation-delay:.2s}.eq i:nth-child(3){animation-delay:.4s}
+@keyframes eq{0%,100%{height:3px}50%{height:12px}}
+.bc span{position:absolute;bottom:-24px;left:-4px;right:-4px;text-align:center;font-size:.72rem;color:var(--mut);white-space:nowrap}
+dialog{border:0;border-radius:40px 14px 40px 14px;padding:0;background:var(--surface-interactive);color:var(--on);width:min(540px,calc(100% - 28px));margin:auto;max-height:calc(100dvh - 32px);overflow:auto;overscroll-behavior:contain;box-shadow:0 24px 70px #0006}
+dialog[open]{animation:pop .5s var(--spring)}
+dialog::backdrop{background:#0008;backdrop-filter:blur(6px)}
+.dlgin{padding:26px;display:grid;gap:20px}
+.sh{display:flex;align-items:center;justify-content:space-between}.sh h3{font-size:1.6rem}
+.sg{display:grid;gap:8px}.sg>span{font-weight:600}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.seg button{border:1px solid color-mix(in srgb,var(--line) 40%,transparent);background:none;color:var(--on);border-radius:999px;padding:8px 16px;transition:border-radius .35s var(--spring),background .2s,transform .3s var(--spring)}
+@media(hover:hover){.seg button:hover{border-radius:14px}}.seg button:active{transform:scale(.94)}
+.seg button[aria-pressed=true]{background:var(--pri);color:var(--onpri);border-color:var(--pri)}
+html.calm *,html.calm *::before,html.calm *::after{animation:none!important;transition:none!important}
+@keyframes growY{from{transform:scaleY(0)}to{transform:none}}
+.tools{display:flex;align-items:center;gap:10px;margin-bottom:28px}
+.range{max-width:100%;overflow-x:auto;scrollbar-width:none}.range::-webkit-scrollbar{display:none}.range button{white-space:nowrap}
+.rf{display:flex;flex-direction:column;align-items:center;gap:3px;flex:none}
+.ib{width:44px;height:44px;border-radius:50%;border:0;background:var(--pc);color:var(--onpc);display:grid;place-items:center;cursor:pointer;flex:none;transition:border-radius .35s var(--spring),transform .35s var(--spring),opacity .2s}
+@media(hover:hover){.ib:hover{border-radius:14px}}.ib:active{transform:scale(.9)}.ib:disabled{opacity:.7}
+.ib svg{width:22px;height:22px;fill:currentColor}
+.ib.busy svg{animation:spinr 1s linear infinite}
+html.lock,html.lock body{overflow:hidden}
+@media(max-width:480px){.range button{padding:9px 13px;font-size:.92rem}}
+@media(max-width:640px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.stats .card:last-child:nth-child(odd),.stats .c3,.stats .c5{grid-column:1/-1}.stats .c1,.stats .c2{min-height:132px}.stats .c2 b{align-self:flex-start}}
+.c5{background:var(--sf);color:var(--on);border-radius:12px 36px 36px 12px}
+.gd{display:inline-block;width:10px;height:10px;border-radius:50%;flex:none;vertical-align:middle;margin-right:8px}.g3 li{display:flex;align-items:center}.g3 li:first-child .gd{width:14px;height:14px}
+.g3{list-style:none;padding:0;display:grid;gap:2px;font-weight:700;font-stretch:108%;line-height:1.15;font-size:1rem;counter-reset:g}.g3 li{overflow-wrap:anywhere;text-transform:capitalize}.g3 li:first-child{font-weight:800;font-size:clamp(1.4rem,6vw,1.9rem);letter-spacing:-.02em;margin-bottom:2px}.g3 li:not(:first-child){opacity:.8}
+.t3{list-style:none;padding:0;display:grid;gap:3px;font-weight:600;font-size:.92rem}
+.t3 li{display:flex;justify-content:space-between;gap:10px}.t3 span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.t3 em{font-style:normal;opacity:.7}
+.rh{display:grid;grid-template-columns:2.6rem 52px minmax(0,1fr) auto 14px;gap:12px;align-items:center;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.row.open{border-radius:28px}
+.chev{width:8px;height:8px;border-right:2px solid var(--mut);border-bottom:2px solid var(--mut);transform:rotate(45deg);justify-self:center;transition:transform .4s var(--spring)}
+.row.open .chev{transform:rotate(-135deg)}
+.rd{display:grid;grid-template-rows:0fr;transition:grid-template-rows .45s cubic-bezier(.2,.8,.2,1)}
+.row.open .rd{grid-template-rows:1fr}
+.rdi{overflow:hidden;min-height:0}
+.dt{display:grid;gap:8px;padding:12px 6px 6px;font-size:.9rem;color:var(--mut)}
+.k{color:var(--on);font-weight:600}.dt a{color:var(--pri);font-weight:600;width:max-content}
+.dh{font:800 1.2rem var(--font);font-stretch:112%;color:var(--on)}
+.chp{display:inline-block;background:var(--pc);color:var(--onpc);border-radius:999px;padding:3px 12px;font-size:.8rem;font-weight:600;margin:0 6px 6px 0}
+/* song details: labelled tiles */
+.ds{display:grid;gap:8px}
+.dlb{font:700 .7rem var(--font);letter-spacing:.14em;text-transform:uppercase;color:var(--pri)}
+.tg{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.tl{display:grid;gap:3px;align-content:start;min-width:0;padding:8px 12px;border-radius:16px;background:var(--tlb,var(--bg));color:var(--tlc,var(--on))}
+.tl.w{grid-column:1/-1}
+.tl .lb{font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;font-weight:600;color:var(--lbc,var(--mut))}
+.tl .vl{font-weight:700;font-size:.98rem;line-height:1.3;overflow-wrap:anywhere}
+.tl .sub{font-weight:500;opacity:.7}
+.tl .chp{margin:2px 6px 2px 0}
+.dt{gap:12px}
+/* artists: rounded squares until opened */
+.af{text-align:center;position:relative;min-width:0;cursor:pointer;-webkit-tap-highlight-color:transparent;animation:pop .6s var(--spring) both;animation-delay:calc(var(--i)*40ms)}
+.af img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:28%;background:var(--line);transition:border-radius .5s var(--spring)}
+.af figcaption{margin-top:8px;font-weight:600;font-size:.9rem}
+.af .ad,.af .chev{display:none}
+.af.open{grid-column:1/-1;cursor:default;text-align:left;color:#fff;border-radius:36px;padding:20px;overflow:hidden;isolation:isolate;
+  --c1:#0f3d36;--c2:#1f7a6b;--c3:#0a1c19;--ac:#5fdbc6;--tlb:rgba(255,255,255,.1);--tlc:#fff;--lbc:rgba(255,255,255,.62);
+  background:radial-gradient(120% 90% at 100% 0%,var(--c2),transparent 62%),linear-gradient(160deg,var(--c1),var(--c3));
+  animation:cardin .55s var(--spring) both;animation-delay:0s}
+.af.open::before{content:'';position:absolute;inset:-25%;z-index:-1;background:var(--pic) center/cover;filter:blur(46px) saturate(1.5);opacity:.3}
+.af.open::after{content:attr(data-ini);position:absolute;right:10px;top:14px;bottom:14px;z-index:-1;writing-mode:vertical-rl;transform:rotate(180deg);font:900 calc(var(--ls,5rem)*1.3)/.88 var(--font);font-stretch:112%;letter-spacing:-.02em;overflow-wrap:anywhere;color:color-mix(in srgb,var(--ac) 30%,transparent);pointer-events:none}
+.af.open .ahd{display:flex;align-items:center;gap:16px;cursor:pointer}
+.af.open img{width:92px;height:92px;flex:none;border-radius:50%;box-shadow:0 0 0 3px var(--ac),0 12px 30px -8px rgba(0,0,0,.65)}
+.af.open figcaption{margin:0;font:800 clamp(1.6rem,6.5vw,2.5rem)/1.05 var(--font);font-stretch:112%;letter-spacing:-.02em;min-width:0;overflow-wrap:anywhere}
+.af.open .chev{display:block;margin-left:auto;flex:none;border-color:#fff;transform:rotate(-135deg)}
+.af.open .ad{display:grid;gap:18px;padding-top:18px}
+.af.open .dlb{color:var(--ac)}
+.af.open .tl{backdrop-filter:blur(1.5px);-webkit-backdrop-filter:blur(1.5px)}
+.af.open .chp{background:color-mix(in srgb,var(--ac) 22%,transparent);border:1px solid color-mix(in srgb,var(--ac) 55%,transparent);color:#fff}
+.af.open .ad>a{background:var(--ac);color:#101414;border-radius:999px;padding:11px 22px;font-weight:700;text-decoration:none;width:max-content}
+@media(min-width:760px){.af.open .tg{grid-template-columns:repeat(4,minmax(0,1fr))}.af.open .tl.w{grid-column:span 2}}
+@keyframes cardin{from{opacity:0;transform:translateY(-10px) scale(.94)}to{opacity:1;transform:none}}
+@keyframes spinr{to{transform:rotate(360deg)}}
+@keyframes pop{from{opacity:0;transform:scale(.8)}to{opacity:1;transform:none}}
+@keyframes rise{from{opacity:0;transform:translateY(18px) scale(.97)}to{opacity:1;transform:none}}
+@keyframes grow{from{transform:scaleX(0)}to{transform:none}}
+@media(max-width:640px){.hero{grid-template-columns:1fr;border-radius:36px}.hero img,.hero .ph{max-width:220px}.bars div{grid-template-columns:116px 1fr}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+@property --accent-dynamic{syntax:'<color>';inherits:true;initial-value:#00695c}
+@property --on-accent{syntax:'<color>';inherits:true;initial-value:#ffffff}
+@property --accent-text{syntax:'<color>';inherits:true;initial-value:#00695c}
+:root{transition:--accent-dynamic .8s,--on-accent .8s,--accent-text .8s}
+html{scroll-padding-top:120px}
+body{transition:background-color .4s}
+/* sticky filter bar */
+.tools{display:grid;gap:8px;position:sticky;top:0;z-index:30;margin:0 -20px 20px;padding:10px 20px;background:color-mix(in srgb,var(--surface-base) 92%,transparent);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px)}
+.tools::after{content:'';position:absolute;left:0;right:0;top:100%;height:20px;background:linear-gradient(var(--surface-base),transparent);pointer-events:none}
+.trow{display:flex;align-items:center;gap:10px;min-width:0}
+.views{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;padding:4px;border-radius:999px;background:var(--surface-elevated)}
+.views button{border:0;background:none;color:var(--mut);padding:8px 10px;border-radius:999px;font-weight:600;font-size:.92rem;transition:background-color .35s,color .35s,transform .35s var(--spring)}
+.views button:active{transform:scale(.95)}
+.views button[aria-pressed=true]{background:var(--accent-dynamic);color:var(--on-accent)}
+@media(hover:hover){.views button[aria-pressed=false]:hover{background:var(--surface-interactive);color:var(--on)}}
+#stats[data-view=tracks] .view:not([data-v=tracks]),#stats[data-view=artists] .view:not([data-v=artists]),#stats[data-view=genres] .view:not([data-v=genres]){display:none}
+/* KPI hero strip */
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;padding:10px;margin-bottom:20px;border-radius:var(--r-lg);background:linear-gradient(135deg,color-mix(in srgb,var(--accent-dynamic) 34%,var(--surface-elevated)),var(--surface-elevated) 75%)}
+.kpi{display:flex;flex-direction:column;justify-content:space-between;gap:6px;min-height:88px;padding:12px 14px;border-radius:var(--r-md);background:color-mix(in srgb,var(--surface-base) 55%,transparent);animation:pop .6s var(--spring) both;animation-delay:calc(var(--i,0)*60ms)}
+.kpi small{font-size:.72rem;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--mut)}
+.kpi b{font-size:clamp(1.3rem,5.4vw,1.9rem);white-space:nowrap;font-variant-numeric:tabular-nums}
+.kpi em{font-style:normal;font-size:.75rem;color:var(--mut)}.kpi a{color:var(--accent-text);font-weight:600}
+@media(max-width:640px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+/* song podium + compact rows */
+.podium{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;align-items:stretch;margin-bottom:12px;grid-auto-flow:dense}
+.row.pod{position:relative;display:flex;flex-direction:column;padding:10px;border-radius:var(--r-lg)}
+.pod .rh{flex:1;grid-template-columns:minmax(0,1fr);grid-template-rows:auto 1fr auto auto;justify-items:center;text-align:center;gap:6px}
+.pod .rh>div{width:100%}
+.pod .n{position:absolute;top:6px;left:6px;z-index:3;display:grid;place-items:center;width:30px;height:30px;border-radius:50%;background:var(--accent-dynamic);color:var(--on-accent);font:800 .95rem/1 var(--font);letter-spacing:0}
+.pod img,.pod .ph{width:100%;height:auto;aspect-ratio:1;border-radius:var(--r-md)}
+.pod .t,.pod .s{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.pod .t{font-size:.92rem}.pod .s{font-size:.78rem}
+.pod .sub{font-size:.75rem;opacity:.7}
+.pod .pl{font-size:.78rem;padding:4px 9px;white-space:nowrap;background:var(--accent-dynamic);color:var(--on-accent)}
+.pod .chev{display:none}
+.row.pod.open{grid-column:1/-1}
+.pod.open .rh{grid-template-columns:96px minmax(0,1fr);grid-template-rows:auto;justify-items:start;text-align:left}
+.pod.open img,.pod.open .ph{width:96px}.pod.open .pl{grid-column:2;justify-self:start}
+.row.bar{position:relative;isolation:isolate;overflow:hidden}
+.row.bar::before{content:'';position:absolute;inset:0 auto 0 0;width:var(--p,0%);background:color-mix(in srgb,var(--accent-dynamic) 16%,transparent);z-index:-1;transition:width .8s var(--spring),background-color .6s}
+/* artist podium + compact rows (same .af markup, so expand/collapse is unchanged) */
+.apod{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:12px;align-items:stretch}
+.alist{display:grid;grid-template-columns:minmax(0,1fr);gap:6px}
+.af .rk,.af .cnt{display:none}
+.apod .af:not(.open),.alist .af:not(.open){position:relative;isolation:isolate;overflow:hidden;background:var(--surface-elevated);transition:background-color .4s,border-radius .4s var(--spring)}
+.apod .af:not(.open){display:flex;flex-direction:column;padding:10px;border-radius:var(--r-lg)}
+.apod .af:not(.open) .ahd{position:relative;display:flex;flex-direction:column;flex:1}
+.apod .af:not(.open) .cnt{margin-top:auto;padding-top:6px}
+.apod .af:not(.open) .rk{display:grid;position:absolute;top:6px;left:6px;z-index:3;width:30px;height:30px;place-items:center;border-radius:50%;background:var(--accent-dynamic);color:var(--on-accent);font:800 .95rem/1 var(--font)}
+.apod .af:not(.open) img{border-radius:var(--r-md)}
+.apod .af:not(.open) figcaption{font-size:.92rem}
+.af:not(.open) .cnt{display:flex;flex-direction:column;align-items:center;gap:2px;margin-top:6px}
+.af:not(.open) .cnt .pl{border-radius:999px;padding:4px 9px;font-weight:700;font-size:.76rem;white-space:nowrap;background:var(--surface-interactive)}
+.apod .af:not(.open) .cnt .pl{background:var(--accent-dynamic);color:var(--on-accent)}
+.af .sub{font-size:.75rem;opacity:.7}
+.alist .af:not(.open){padding:8px 12px 8px 8px;border-radius:var(--r-md);text-align:left}
+.alist .af:not(.open)::before{content:'';position:absolute;inset:0 auto 0 0;width:var(--p,0%);background:color-mix(in srgb,var(--accent-dynamic) 16%,transparent);z-index:-1;transition:width .8s var(--spring)}
+.alist .af:not(.open) .ahd{display:flex;align-items:center;gap:12px;cursor:pointer}
+.alist .af:not(.open) .rk{display:block;width:2.2rem;text-align:center;font:800 1.05rem/1 var(--font);font-stretch:112%;color:color-mix(in srgb,var(--pri) 45%,transparent)}
+.alist .af:not(.open) img{width:44px;height:44px;flex:none;border-radius:12px}
+.alist .af:not(.open) figcaption{margin:0;flex:1;min-width:0;font-size:.95rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.alist .af:not(.open) .cnt{margin:0;align-items:flex-end}
+.alist .af:not(.open) .chev{display:none}
+
+/* podium metals + crown */
+.podium .row.pod:nth-child(1),.apod .af:nth-child(1){--m:#e9b730}
+.podium .row.pod:nth-child(2),.apod .af:nth-child(2){--m:#aab4c0}
+.podium .row.pod:nth-child(3),.apod .af:nth-child(3){--m:#cd7f32}
+.podium .row.pod,.apod .af:not(.open){box-shadow:0 0 0 2px color-mix(in srgb,var(--m) 75%,transparent),0 14px 28px -18px var(--m)}
+.apod .af:not(.open){background:color-mix(in srgb,var(--m) 13%,var(--surface-elevated))}
+.pod .n,.apod .af:not(.open) .rk{background:var(--m);color:#1a1a1a}
+.podium .row.pod:first-child::after,.apod .af:not(.open):first-child::after{content:'👑';position:absolute;top:2px;right:8px;z-index:4;font-size:1.35rem;filter:drop-shadow(0 2px 3px #0005);transform:rotate(14deg)}
+/* compact sticky bar: layout height stays constant so content never jumps */
+.tools{transition:padding .25s,gap .25s,margin .25s}
+.tools.compact{padding-top:5px;padding-bottom:5px;gap:4px;margin-bottom:40px}
+.tools.compact .rf{display:none}
+.tools.compact .views button{padding:5px 10px;font-size:.85rem}
+.vrow{display:flex;align-items:stretch;gap:8px}.vrow .views{flex:1;min-width:0}
+.jb{display:flex;align-items:center;gap:6px;border:0;border-radius:999px;padding:0 14px;background:var(--surface-elevated);color:var(--on);font:inherit;font-weight:600;font-size:.9rem;transition:background-color .35s,color .35s}
+.jb[aria-expanded=true]{background:var(--accent-dynamic);color:var(--on-accent)}
+.jump{position:absolute;right:20px;top:calc(100% - 4px);min-width:210px;display:grid;gap:2px;padding:6px;border-radius:var(--r-md);background:var(--surface-interactive);box-shadow:0 18px 40px -12px #0007;z-index:40;transform-origin:top right;animation:pop .25s var(--spring)}
+.jump[hidden]{display:none}
+.jump button{border:0;background:none;text-align:left;padding:12px 14px;border-radius:var(--r-sm);color:var(--on);font:inherit;font-weight:600}
+.jump button:hover,.jump button:focus-visible{background:color-mix(in srgb,var(--accent-dynamic) 20%,transparent)}
+/* share + calendar */
+.kact{display:flex;justify-content:flex-end;margin:-8px 0 16px}
+.cal{padding:18px}
+.cscroll{overflow-x:auto;padding-bottom:6px;scrollbar-width:none}.cscroll::-webkit-scrollbar{display:none}
+.cmonths{position:relative;height:18px}.cmonths span{position:absolute;font-size:.7rem;color:var(--mut)}
+.cgrid{display:grid;grid-template-rows:repeat(7,12px);grid-auto-flow:column;grid-auto-columns:12px;gap:3px;width:max-content}
+.cd{display:block;width:12px;height:12px;border-radius:4px;background:var(--surface-interactive);transition:transform .2s var(--spring)}
+.cd.l1{background:color-mix(in srgb,var(--accent-dynamic) 28%,var(--surface-interactive))}
+.cd.l2{background:color-mix(in srgb,var(--accent-dynamic) 52%,var(--surface-interactive))}
+.cd.l3{background:color-mix(in srgb,var(--accent-dynamic) 76%,var(--surface-interactive))}
+.cd.l4{background:var(--accent-dynamic)}
+.cd.sel{outline:2px solid var(--on);outline-offset:1px;transform:scale(1.15)}
+.cal .note{margin:10px 0 8px;font-size:.9rem}
+.clegend{display:flex;align-items:center;gap:4px;font-size:.72rem;color:var(--mut)}.clegend .cd{margin:0}
+/* skeleton */
+.sk{background:linear-gradient(90deg,var(--surface-elevated) 30%,var(--surface-interactive) 50%,var(--surface-elevated) 70%) 0 0/300% 100%}
+.skg{display:grid;gap:16px;margin-top:8px}
+.sk-k{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.sk-k .sk{height:88px;border-radius:var(--r-md)}
+.sk-p{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.sk-p .sk{height:210px;border-radius:var(--r-lg)}
+.sk-r{display:grid;gap:6px}.sk-r .sk{height:62px;border-radius:var(--r-md)}
+@media(min-width:641px){.sk-k{grid-template-columns:repeat(4,minmax(0,1fr))}}
+</style>
+</head>
+<body>
+<div id="bar"></div>
+
+<main id="login" class="hidden">
+  <h1>Tally</h1>
+  <p>Sign in with Spotify to see your top songs, artists and genres, plus exact plays and minutes if you add your streaming history.</p>
+  <button class="btn" id="loginBtn">Sign in with Spotify</button>
+  <div id="err" role="alert"></div>
+</main>
+
+<div id="app" class="hidden">
+  <header>
+    <span class="brand">Tally</span>
+    <img id="avatar" alt="" class="hidden">
+    <span id="who"></span>
+    <button class="ib" id="openSet" aria-label="Settings"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.488.488 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 0 0-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg></button>
+  </header>
+  <a id="np" class="np hidden" target="_blank" rel="noopener"></a>
+  <div class="tools" id="tools"><div class="trow">
+    <div class="range" role="group" aria-label="Time range">
+    <i id="ind"></i>
+    <button data-r="week" aria-pressed="false" hidden>This week</button>
+    <button data-r="short_term" aria-pressed="false">4 weeks</button>
+    <button data-r="medium_term" aria-pressed="true">6 months</button>
+    <button data-r="year" aria-pressed="false" hidden>This year</button>
+    <button data-r="long_term" aria-pressed="false">All time</button>
+  </div>
+    <div class="rf"><span class="upd" id="upd"></span></div>
+  </div>
+  <div class="vrow"><div class="views" role="group" aria-label="View"><button data-v="tracks" aria-pressed="true">Tracks</button><button data-v="artists" aria-pressed="false">Artists</button><button data-v="genres" aria-pressed="false">Genres</button></div>
+  <button class="jb" id="jumpBtn" aria-haspopup="menu" aria-expanded="false" aria-controls="jumpMenu"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h10" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/></svg>Jump to</button></div>
+  <div class="jump" id="jumpMenu" role="menu" hidden><button role="menuitem" data-t="songsSec">Top songs</button><button role="menuitem" data-t="recSec">Records</button><button role="menuitem" data-t="clockSec">Listening clock</button><button role="menuitem" data-t="calSec">Calendar</button><button role="menuitem" data-t="recentSec">Recently played</button></div>
+  </div>
+  <div id="load"></div>
+  <div id="stats" data-view="tracks"></div>
+
+</div>
+
+<dialog id="settings" aria-labelledby="stT"><div class="dlgin">
+  <div class="sh"><h3 id="stT">Settings</h3><button class="btn tonal sm" id="stClose">Close</button></div>
+  <div id="stBody" style="display:grid;gap:18px"></div>
+  <p id="npNote" class="note hidden" style="margin-top:18px">To show what you’re listening to right now, Spotify needs one more permission. Tap Sign out, then sign in again.</p>
+  <section style="margin-top:18px" class="import" id="import">
+    <h3>Exact plays and minutes <span class="st" id="impSt" data-s="off">Not added</span></h3>
+    <p id="impText"></p>
+    <div class="acts">
+      <label class="btn sm" for="file" tabindex="0" id="fileLbl">Add streaming history</label>
+      <input type="file" id="file" accept=".json,.zip" multiple class="hidden">
+      <button class="btn tonal sm hidden" id="dl">Download history</button>
+      <button class="btn tonal sm hidden" id="clear">Remove history</button>
+    </div>
+  </section>
+  <section class="import" id="syncBox" style="margin-top:12px">
+    <h3>Hands-free sync <span class="st" id="syncSt" data-s="off">Not set up</span></h3>
+    <p id="syncText"></p>
+    <div id="syncForm" class="acts hidden">
+      <input id="syncUrl" placeholder="Worker URL (https://tally-sync.you.workers.dev)" aria-label="Worker URL" style="flex:1 1 260px;padding:10px 14px;border-radius:14px;border:1px solid color-mix(in srgb,var(--line) 40%,transparent);font:inherit">
+      <input id="syncKey" type="password" placeholder="Sync key" aria-label="Sync key" style="flex:1 1 160px;padding:10px 14px;border-radius:14px;border:1px solid color-mix(in srgb,var(--line) 40%,transparent);font:inherit">
+      <button class="btn sm" id="syncGo">Connect</button>
+    </div>
+    <div class="acts"><button class="btn tonal sm" id="syncToggle">Set up</button><button class="btn tonal sm hidden" id="syncTest">Check sync</button></div>
+  </section>
+  <section class="import" id="lfmBox" style="margin-top:12px">
+    <h3>Extra info from Last.fm <span class="st" id="lfmSt" data-s="off">No key</span></h3>
+    <p id="lfmText"></p>
+    <div class="acts">
+      <input id="lfmKey" placeholder="Last.fm API key" aria-label="Last.fm API key" autocomplete="off" style="flex:1 1 240px;padding:10px 14px;border-radius:14px;border:1px solid color-mix(in srgb,var(--line) 40%,transparent);font:inherit">
+      <button class="btn sm" id="lfmSave">Save</button>
+    </div>
+  </section>
+  <div class="acts" style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn tonal sm" id="resetSet">Reset settings</button><button class="btn tonal sm" id="logout">Sign out</button></div>
+</div></dialog>
+
+<script>
+const CLIENT_ID = 'a3e33113affc4a10ae39f544aeec42d1';
+// Must match a Redirect URI you added in the Spotify dashboard exactly.
+const REDIRECT = location.origin + location.pathname;
+const SCOPES = 'user-top-read user-read-recently-played user-read-currently-playing';
+const DAYS = { short_term: 28, medium_term: 183, long_term: Infinity };
+const BASE = { week: 'short_term', year: 'long_term' }; // calendar ranges built from your history; Spotify's lists stand in for artists
+const cutOf = (r, anchor) => { const today = Math.floor(Date.now() / 864e5);
+  if (r === 'week') return today - ((today + 3) % 7) - 1; // weeks start Monday
+  if (r === 'year') return Date.UTC(new Date().getUTCFullYear(), 0, 1) / 864e5 - 1;
+  return anchor - DAYS[r]; };
+
+const $ = s => document.querySelector(s);
+const ls = {
+  get: k => { try { return localStorage.getItem(k); } catch { return null; } },
+  set: (k, v) => { try { localStorage.setItem(k, v); return true; } catch { return false; } },
+  del: k => { try { localStorage.removeItem(k); } catch {} }
+};
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const b64url = buf => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+const randomStr = n => b64url(crypto.getRandomValues(new Uint8Array(n)));
+const img = o => (o?.images?.[1] || o?.images?.[0] || {}).url || '';
+const fmt = n => Math.round(n).toLocaleString();
+
+// ---- Settings ----
+const DEF = { theme: 'auto', tz: 'local', songs: 30, minDay: 1, calm: false, auto: true };
+let settings = { ...DEF }; try { Object.assign(settings, JSON.parse(ls.get('settings') || '{}')); } catch {}
+if (!(settings.songs <= 30)) settings.songs = 30; // lists never show more than 30 songs
+const OPTS = [
+  ['theme', 'Theme', [['auto', 'Auto'], ['light', 'Light'], ['dark', 'Dark']]],
+  ['tz', 'Listening clock and records use', [['local', 'My time zone'], ['utc', 'UTC']]],
+  ['songs', 'Songs per list', [[10, '10'], [20, '20'], [30, '30']]],
+  ['minDay', 'A streak day needs at least', [[1, '1 min'], [10, '10 min'], [30, '30 min']]],
+  ['calm', 'Animations', [[false, 'Full'], [true, 'Reduced']]],
+  ['auto', 'Catch up when I return to the tab (every 30 min)', [[true, 'On'], [false, 'Off']]]
+];
+function applySettings() {
+  const r = document.documentElement;
+  settings.theme === 'auto' ? r.removeAttribute('data-theme') : r.setAttribute('data-theme', settings.theme);
+  r.classList.toggle('calm', !!settings.calm); applyAccent();
+}
+function buildSettingsUI() {
+  $('#stBody').innerHTML = OPTS.map(([k, label, vals]) => `<div class="sg"><span>${label}</span><div class="seg" data-k="${k}">${
+    vals.map(([v, t]) => `<button data-v="${v}" aria-pressed="${String(settings[k]) === String(v)}">${t}</button>`).join('')}</div></div>`).join('');
+}
+const saveSettings = () => { ls.set('settings', JSON.stringify(settings)); applySettings(); buildSettingsUI(); if (cache.medium_term) render(); };
+
+// ---- Auth (PKCE, no server needed) ----
+async function login() {
+  const verifier = randomStr(64);
+  const challenge = b64url(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(verifier)));
+  ls.set('verifier', verifier);
+  location.href = 'https://accounts.spotify.com/authorize?' + new URLSearchParams({ client_id: CLIENT_ID,
+    response_type: 'code', redirect_uri: REDIRECT, scope: SCOPES, code_challenge_method: 'S256', code_challenge: challenge });
+}
+async function tokenRequest(body) {
+  const r = await fetch('https://accounts.spotify.com/api/token', { method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ client_id: CLIENT_ID, ...body }) });
+  const d = await r.json();
+  if (!r.ok) throw new Error(body.grant_type === 'refresh_token' ? 'auth' : (d.error_description || 'Sign-in failed.')); // a refused refresh means: sign in again
+  ls.set('cid', CLIENT_ID); ls.set('access', d.access_token); ls.set('expires', Date.now() + d.expires_in * 1000);
+  if (d.refresh_token) ls.set('refresh', d.refresh_token);
+}
+async function getToken() {
+  if (Date.now() > Number(ls.get('expires') || 0) - 60000) {
+    const refresh = ls.get('refresh'); if (!refresh) return null;
+    await tokenRequest({ grant_type: 'refresh_token', refresh_token: refresh });
+  }
+  return ls.get('access');
+}
+function logout() { ['access','expires','refresh','verifier'].forEach(ls.del); location.href = REDIRECT; }
+// Every Spotify call goes through one queue: one at a time, spaced out, and paused while Spotify says to wait.
+let coolUntil = 0, gate = Promise.resolve();
+const sleep = ms => new Promise(res => setTimeout(res, ms));
+function slot() { const p = gate.then(async () => { const w = coolUntil - Date.now(); if (w > 0) await sleep(w); }); gate = p.then(() => sleep(450)); return p; }
+async function api(path) {
+  let r;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    await slot();
+    const t = await getToken(); if (!t) throw new Error('auth');
+    try { r = await fetch('https://api.spotify.com/v1' + path, { headers: { Authorization: 'Bearer ' + t } }); }
+    catch { r = null; }
+    if (r && r.status < 500 && r.status !== 429) break;
+    if (r && r.status === 429) {
+      const secs = Number(r.headers.get('Retry-After')) || 30; coolUntil = Math.max(coolUntil, Date.now() + secs * 1000 + 1000);
+      if (secs > 40) break; // a long ban: stop here instead of waiting it out
+    } else await sleep(700 * (attempt + 1));
+  }
+  if (!r) throw new Error('Could not reach Spotify. Check your connection and try again.');
+  if (r.status === 401) throw new Error('auth');
+  if (r.status === 403) throw new Error('Spotify refused access. If your app is in development mode, add this account under User Management in the dashboard.');
+  if (r.status === 429) { const m = Math.max(1, Math.ceil((coolUntil - Date.now()) / 6e4)); throw new Error('Spotify is rate limiting requests. Try again in about ' + m + (m === 1 ? ' minute.' : ' minutes.')); }
+  if (!r.ok) throw new Error('Spotify returned an error (' + r.status + ').');
+  return r.json();
+}
+
+// ---- Streaming history import (Spotify data export) ----
+// hist = { t: [[key, name, artist, trackId], ...], d: [[day, trackIdx, ms, plays], ...] }
+let hist = null;
+const memo = {}, mem = {};
+const idb = { db: null,
+  open() { return this.db ||= new Promise((res, rej) => { const r = indexedDB.open('tally', 1); r.onupgradeneeded = () => r.result.createObjectStore('kv'); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); }); },
+  async get(k) { try { const db = await this.open(); return await new Promise(res => { const q = db.transaction('kv').objectStore('kv').get(k); q.onsuccess = () => res(q.result ?? null); q.onerror = () => res(null); }); } catch { return mem[k] ?? null; } },
+  async set(k, v) { mem[k] = v; try { const db = await this.open(); await new Promise((res, rej) => { const tx = db.transaction('kv', 'readwrite'); tx.objectStore('kv').put(v, k); tx.oncomplete = res; tx.onerror = () => rej(tx.error); }); } catch {} },
+  async del(k) { delete mem[k]; try { const db = await this.open(); await new Promise(res => { const tx = db.transaction('kv', 'readwrite'); tx.objectStore('kv').delete(k); tx.oncomplete = res; tx.onerror = res; }); } catch {} } };
+const saveHist = () => { Object.keys(memo).forEach(k => delete memo[k]); return idb.set('hist', hist); };
+const tsOf = s => Date.parse(s.includes('T') ? s : s.replace(' ', 'T') + 'Z');
+const dayOf = s => Math.floor(tsOf(s) / 864e5);
+
+function addPlay(h, at, key, name, artist, id, ms) {
+  let i = h.t.findIndex(x => x[0] === key);
+  if (i < 0) { i = h.t.length; h.t.push([key, name, artist, id]); }
+  const day = Math.floor(at / 864e5), e = h.d.find(e => e[0] === day && e[1] === i);
+  if (e) { e[2] += ms; e[3]++; } else h.d.push([day, i, ms, 1]);
+  if (h.h) { const hi = Math.floor(at / 36e5), he = h.h.find(x => x[0] === hi); if (he) { he[1] += ms; he[2]++; } else h.h.push([hi, ms, 1]); }
+}
+// Adds plays newer than the last one on file. Spotify only returns your latest plays, so open Tally regularly.
+// plays = [[playedAtMs, trackId, name, artist, durationMs], ...] oldest first
+const exEnd = () => hist.exportEnd ??= (hist.a?.length ? Math.min(...hist.a.map(x => x[0])) - 1 : hist.last || 0);
+async function mergePlays(plays) {
+  if (!hist) return 0;
+  hist.a ||= [];
+  hist.last ||= (hist.d.reduce((m, e) => e[0] > m ? e[0] : m, 0) + 1) * 864e5 - 1;
+  const ee = exEnd(), have = new Set(hist.a.map(x => x[0] + '|' + x[1])); let n = 0;
+  for (const [at, id, name, artist, ms] of plays.slice().sort((x, y) => x[0] - y[0])) {
+    if (!id || at <= ee || have.has(at + '|' + id)) continue;
+    addPlay(hist, at, 'spotify:track:' + id, name, artist, id, ms);
+    hist.a.push([at, id, name, artist, ms]); have.add(at + '|' + id);
+    hist.last = Math.max(hist.last, at); n++;
+  }
+  if (n) await saveHist();
+  return n;
+}
+const mergeRecent = items => {
+  // Spotify only returns the latest 50 plays. If all 30 are newer than anything on file, plays in between were missed: remember the gap.
+  const oldest = items.length >= 30 ? Date.parse(items[items.length - 1].played_at) : 0;
+  if (hist && oldest && hist.last && oldest > hist.last) (hist.gaps ||= []).push([hist.last, oldest]), hist.gaps = hist.gaps.slice(-30);
+  return mergePlays(items.slice().reverse().map(x => x.track?.id
+    ? [Date.parse(x.played_at), x.track.id, x.track.name, x.track.artists[0]?.name, x.track.duration_ms] : [0]));
+};
+const gapNote = r => {
+  if (!hist?.gaps?.length) return '';
+  const cut = cutOf(r, S[r]?.anchor || 0) * 864e5, g = hist.gaps.filter(([, b]) => b > cut); if (!g.length) return '';
+  const hrs = g.reduce((n, [a, b]) => n + (b - Math.max(a, cut)) / 36e5, 0), f = t => new Date(t).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  return `<p class="note" style="margin:-4px 0 24px">Some plays are missing from this range: Spotify only shares your last 30 plays here, and Tally wasn’t open for about ${fmt(hrs)} hours (${f(Math.max(g[0][0], cut))} to ${f(g[g.length - 1][1])}). That’s why Spotify’s own totals can be higher. Hands-free sync in Settings prevents this.</p>`;
+};
+
+// ---- Hands-free sync (optional Cloudflare Worker, see worker/) ----
+const sync = {
+  url: () => (ls.get('syncUrl') || '').replace(/\/+$/, ''),
+  key: () => ls.get('syncKey') || '',
+  on() { return !!(this.url() && this.key()); },
+  async call(path, opts = {}) {
+    const r = await fetch(this.url() + path, { ...opts, headers: { Authorization: 'Bearer ' + this.key(), 'Content-Type': 'application/json' } });
+    if (!r.ok) throw new Error(r.status === 401 ? 'Wrong sync key.' : 'Sync server error (' + r.status + ').');
+    return r.json();
+  },
+  async connect(url, key) {
+    ls.set('syncUrl', url.trim()); ls.set('syncKey', key.trim());
+    const refresh = ls.get('refresh'); if (!refresh) throw new Error('Sign in again first.');
+    await this.call('/setup', { method: 'POST', body: JSON.stringify({ refresh_token: refresh }) });
+  },
+  disconnect() { ls.del('syncUrl'); ls.del('syncKey'); this.msg = ''; },
+  async pull() {
+    if (!this.on() || !hist) return 0;
+    const d = await this.call('/plays?after=' + exEnd()), n = await mergePlays(d.plays || []);
+    this.msg = `Last check: the worker sent ${(d.plays || []).length} plays, ${n} were new.`; return n;
+  }
+};
+
+// ---- Zip reader (no library): finds the streaming-history JSON files in Spotify's export zip ----
+async function readZip(file) {
+  const buf = await file.arrayBuffer(), v = new DataView(buf), u8 = new Uint8Array(buf), dec = new TextDecoder(), out = [];
+  let eocd = -1;
+  for (let i = buf.byteLength - 22; i >= Math.max(0, buf.byteLength - 66000); i--) if (v.getUint32(i, true) === 0x06054b50) { eocd = i; break; }
+  if (eocd < 0) throw new Error(file.name + ' is not a valid zip.');
+  let p = v.getUint32(eocd + 16, true);
+  for (let n = v.getUint16(eocd + 10, true); n > 0; n--) {
+    if (v.getUint32(p, true) !== 0x02014b50) break;
+    const method = v.getUint16(p + 10, true), csize = v.getUint32(p + 20, true), nl = v.getUint16(p + 28, true),
+      el = v.getUint16(p + 30, true), cl = v.getUint16(p + 32, true), off = v.getUint32(p + 42, true),
+      name = dec.decode(u8.subarray(p + 46, p + 46 + nl));
+    p += 46 + nl + el + cl;
+    if (!/Streaming_?History.*\.json$/i.test(name) || /video/i.test(name)) continue;
+    const start = off + 30 + v.getUint16(off + 26, true) + v.getUint16(off + 28, true), data = u8.subarray(start, start + csize);
+    if (method === 0) out.push(dec.decode(data));
+    else if (method === 8) out.push(await new Response(new Blob([data]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).text());
+  }
+  if (!out.length) throw new Error('No streaming history files found in ' + file.name + '.');
+  return out;
+}
+
+async function importFiles(files) {
+  const tIdx = new Map(), t = [], agg = new Map(), hAgg = new Map(); let last = 0;
+  const texts = [];
+  for (const f of files) {
+    if (/\.zip$/i.test(f.name)) for (const s of await readZip(f)) texts.push(['a file in ' + f.name, s]);
+    else texts.push([f.name, await f.text()]);
+  }
+  for (const [fname, txt] of texts) {
+    let rows; try { rows = JSON.parse(txt); } catch { throw new Error(fname + ' is not valid JSON.'); }
+    if (rows && Array.isArray(rows.t) && Array.isArray(rows.d)) { hist = rows; await saveHist(); return; } // a history file saved from Tally
+    if (!Array.isArray(rows)) continue;
+    for (const r of rows) {
+      const name = r.master_metadata_track_name || r.trackName;
+      const artist = r.master_metadata_album_artist_name || r.artistName;
+      const ms = r.ms_played ?? r.msPlayed ?? 0;
+      const when = r.ts || r.endTime;
+      if (!name || !when) continue; // skips podcasts and malformed rows
+      last = Math.max(last, tsOf(when));
+      { const hi = Math.floor(tsOf(when) / 36e5), he = hAgg.get(hi) || [hi, 0, 0]; he[1] += ms; if (ms >= 30000) he[2]++; hAgg.set(hi, he); }
+      const uri = r.spotify_track_uri, key = uri || artist + '|' + name;
+      if (!tIdx.has(key)) { tIdx.set(key, t.length); t.push([key, name, artist, uri ? uri.split(':').pop() : null]); }
+      const k = dayOf(when) + '|' + tIdx.get(key), e = agg.get(k) || [dayOf(when), tIdx.get(key), 0, 0];
+      e[2] += ms; if (ms >= 30000) e[3]++; // Spotify counts a play after 30 seconds
+      agg.set(k, e);
+    }
+  }
+  if (!t.length) throw new Error('No song plays found. Use the Streaming_History_Audio files from the extended history export.');
+  const old = hist; hist = { t, d: [...agg.values()], last, exportEnd: last, a: [], h: [...hAgg.values()] };
+  for (const [at, id, name, artist, ms] of old?.a || []) if (at > last) { // keep plays auto-added after this export ends
+    addPlay(hist, at, 'spotify:track:' + id, name, artist, id, ms); hist.a.push([at, id, name, artist, ms]); hist.last = Math.max(hist.last, at);
+  }
+  await saveHist();
+}
+
+function canon() { // the same song can exist under several Spotify ids (single, album, re-release): count it once
+  return memoed('canon', () => {
+    const first = new Map(), ids = new Map();
+    const c = hist.t.map((x, i) => { const k = (x[1] + '|' + x[2]).toLowerCase().replace(/\s+/g, ' ').trim(); if (!first.has(k)) first.set(k, i);
+      const ci = first.get(k); if (x[3]) (ids.get(ci) || ids.set(ci, []).get(ci)).push(x[3]); return ci; });
+    return { c, ids };
+  });
+}
+function compute(range) {
+  const anchor = hist.d.reduce((m, e) => e[0] > m ? e[0] : m, 0), cut = cutOf(range, anchor);
+  const per = new Map(), C = canon(); let ms = 0, plays = 0;
+  for (const [day, i, m, p] of hist.d) {
+    if (day <= cut) continue;
+    const ci = C.c[i], e = per.get(ci) || { i: ci, ms: 0, plays: 0 }; e.ms += m; e.plays += p; per.set(ci, e); ms += m; plays += p;
+  }
+  const top = [...per.values()].sort((a, b) => b.plays - a.plays || b.ms - a.ms).slice(0, 50);
+  return { minutes: ms / 60000, plays, top, anchor };
+}
+
+// ---- Rendering ----
+let range = 'medium_term', recent = null; const art = {};
+
+
+// ---- Per-artist plays/minutes, and adaptive accent colour ----
+const artStats = r => memoed('as|' + r, () => { const cut = cutOf(r, S[r].anchor), m = new Map();
+  for (const [day, i, ms, p] of hist.d) { if (day <= cut) continue; const n = hist.t[i][2], e = m.get(n) || { p: 0, ms: 0 }; e.p += p; e.ms += ms; m.set(n, e); }
+  return m; });
+var accHS = null, accUrl = '', topArt = '', kpiData = {};
+function hex2rgb(h) { h = String(h).trim().replace('#', ''); if (h.length === 3) h = [...h].map(c => c + c).join(''); return [0, 2, 4].map(i => parseInt(h.slice(i, i + 2), 16) || 0); }
+function lum(c) { const f = v => (v /= 255) <= .03928 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4; return .2126 * f(c[0]) + .7152 * f(c[1]) + .0722 * f(c[2]); }
+function cr(a, b) { const x = lum(a), y = lum(b); return (Math.max(x, y) + .05) / (Math.min(x, y) + .05); }
+function hsl2rgb(h, s, l) { s /= 100; l /= 100; const k = n => (n + h / 30) % 12, a = s * Math.min(l, 1 - l), f = n => l - a * Math.max(-1, Math.min(k(n) - 3, 9 - k(n), 1)); return [f(0), f(8), f(4)].map(v => Math.round(v * 255)); }
+const rgbHex = c => '#' + c.map(v => v.toString(16).padStart(2, '0')).join('');
+function applyAccent() { // keeps the cover colour WCAG-safe: fill >= 3:1 on the page, text on the fill >= 4.5:1, accent text on cards >= 4.5:1
+  const st = document.documentElement.style, names = ['--accent-dynamic', '--on-accent', '--accent-text'];
+  if (!accHS) return names.forEach(n => st.removeProperty(n));
+  const cs = getComputedStyle(document.documentElement), base = hex2rgb(cs.getPropertyValue('--surface-base')), elev = hex2rgb(cs.getPropertyValue('--surface-elevated'));
+  const dark = lum(base) < .3, step = dark ? 2 : -2, cl = v => Math.min(95, Math.max(5, v)), h = accHS[0], sat = Math.min(85, Math.max(45, accHS[1]));
+  let L = dark ? 62 : 38, fill = hsl2rgb(h, sat, L);
+  for (let i = 0; i < 40 && cr(fill, base) < 3; i++) { L = cl(L + step); fill = hsl2rgb(h, sat, L); }
+  let on = cr(fill, [255, 255, 255]) >= cr(fill, [0, 0, 0]) ? [255, 255, 255] : [0, 0, 0];
+  for (let i = 0; i < 30 && cr(fill, on) < 4.5; i++) { L = cl(L + (on[0] ? -2 : 2)); fill = hsl2rgb(h, sat, L); }
+  let T = L, tx = fill; for (let i = 0; i < 40 && cr(tx, elev) < 4.5; i++) { T = cl(T + step); tx = hsl2rgb(h, sat, T); }
+  st.setProperty('--accent-dynamic', rgbHex(fill)); st.setProperty('--on-accent', rgbHex(on)); st.setProperty('--accent-text', rgbHex(tx));
+}
+function accentFrom(url) { // now-playing cover when something plays, otherwise the #1 cover
+  if (!url || url === accUrl) return; accUrl = url;
+  palette(url).then(p => { const m = p && /hsl\((\d+) (\d+)%/.exec(p.ac); if (m && url === accUrl) { accHS = [+m[1], +m[2]]; applyAccent(); } });
+}
+matchMedia('(prefers-color-scheme:dark)').addEventListener('change', applyAccent);
+const lsz = n => { const l = [...(n || '')].length; return l <= 5 ? '6.5rem' : l <= 9 ? '4.6rem' : l <= 14 ? '3.2rem' : '2.4rem'; };
+const ago = at => { const m = Math.max(0, Math.round((Date.now() - new Date(at)) / 6e4)); return m < 1 ? 'just now' : m < 60 ? m + ' min ago' : m < 1440 ? Math.round(m / 60) + ' hr ago' : Math.round(m / 1440) + ' d ago'; };
+function row(t, i, rank, o = {}) {
+  const k = reg({ s: t });
+  const pic = t.art ? `<img src="${esc(t.art)}" alt="" loading="lazy">` : `<div class="ph" data-ids="${esc((t.ids || [t.id || '']).join(' '))}"></div>`;
+  return `<li class="row${o.cls ? ' ' + o.cls : ''}" style="--i:${i}${o.p != null ? ';--p:' + o.p + '%' : ''}" data-k="${k}"><div class="rh" role="button" tabindex="0" aria-expanded="false"><span class="n">${rank || ''}</span>${pic}
+    <div style="min-width:0"><div class="t">${esc(t.name)}</div><div class="s">${esc(t.artist)}${t.mins && o.cls !== 'pod' ? ' · ' + fmt(t.mins) + ' min' : ''}</div></div>
+    ${t.badge ? `<span class="pl">${esc(t.badge)}</span>` : '<span></span>'}${o.cls === 'pod' && t.mins ? `<span class="sub">${fmt(t.mins)} min</span>` : ''}<i class="chev"></i></div>
+    <div class="rd"><div class="rdi"><div class="dt"></div></div></div></li>`;
+}
+const norm = t => ({ name: t.name, artist: t.artists.map(a => a.name).join(', '), art: img(t.album), link: t.external_urls?.spotify, id: t.id, artists: t.artists.map(a => a.name) });
+
+function countUp(el) {
+  const to = Number(el.dataset.n), t0 = performance.now(), d = (matchMedia('(prefers-reduced-motion:reduce)').matches || settings.calm) ? 0 : 900;
+  (function step(now) {
+    const p = d ? Math.min((now - t0) / d, 1) : 1;
+    el.textContent = fmt(to * (1 - Math.pow(1 - p, 3)));
+    if (p < 1) requestAnimationFrame(step);
+  })(t0);
+}
+function moveInd() {
+  const b = document.querySelector('.range [aria-pressed=true]');
+  $('#ind').style.transform = `translateX(${b.offsetLeft}px)`; $('#ind').style.width = b.offsetWidth + 'px';
+}
+const setSt = (id, st, t) => { const e = $(id); if (e) { e.dataset.s = st; e.textContent = t; } };
+function importUi() {
+  if (!hist && BASE[range]) { range = 'medium_term'; document.querySelectorAll('.range button').forEach(x => x.setAttribute('aria-pressed', x.dataset.r === range)); if (cache.medium_term) render(); }
+  document.querySelectorAll('.range [data-r=week],.range [data-r=year]').forEach(b => b.hidden = !hist); if (!$('#app').classList.contains('hidden')) moveInd();
+  const n = hist ? hist.d.reduce((s, e) => s + e[3], 0) : 0;
+  $('#impText').innerHTML = hist
+    ? `History loaded: ${fmt(n)} plays across ${fmt(hist.t.length)} songs, up to ${new Date(hist.last || 0).toLocaleDateString(undefined, { dateStyle: 'medium' })}. New plays are added each time you open Tally (Spotify shares your latest 30, and plays added this way count minutes by song length). Download the history as a backup, or add a newer export to fill any gap.`
+    : `Spotify’s API doesn’t share play counts or listening time. For exact numbers, request your <b style="font-weight:700">Extended streaming history</b> at <a href="https://www.spotify.com/account/privacy/" target="_blank" rel="noopener">spotify.com/account/privacy</a>, then add the <code>Streaming_History_Audio_*.json</code> files here. They stay in your browser.`;
+  $('#clear').classList.toggle('hidden', !hist); $('#dl').classList.toggle('hidden', !hist);
+  $('#syncText').textContent = sync.on()
+    ? 'Connected. A background job saves every song you play, so plays stay complete even if you don’t open Tally for days. ' + (sync.msg || '')
+    : 'Optional. Deploy the small Cloudflare Worker from the worker folder and it logs your plays every 30 minutes, so nothing is missed between visits.';
+  setSt('#impSt', hist ? 'on' : 'off', hist ? 'Loaded' : 'Not added');
+  setSt('#syncSt', !sync.on() ? 'off' : /^Problem/.test(sync.msg || '') ? 'bad' : 'on', !sync.on() ? 'Not set up' : /^Problem/.test(sync.msg || '') ? 'Problem' : 'Connected');
+  $('#syncToggle').textContent = sync.on() ? 'Disconnect' : 'Set up'; $('#syncTest').classList.toggle('hidden', !sync.on());
+}
+
+// ---- Loading experience: real steps, real numbers, steady motion ----
+const STEPS = ['Connecting to Spotify', 'Fetching your top songs', 'Digging up your top artists', 'Checking what you played lately', 'Counting plays and minutes', 'Gathering cover art'];
+const loader = {
+  on: false, ok: [], done: 0, p: 0, timer: null,
+  paint() { $('#bar').style.transform = `scaleX(${this.p})`; },
+  start(hasData) {
+    this.on = true; this.ok = []; this.done = 0; this.p = 0;
+    const bar = $('#bar'); bar.style.transition = 'none'; bar.style.transform = 'scaleX(0)'; bar.offsetWidth; bar.style.transition = ''; bar.style.opacity = 1;
+    document.body.classList.toggle('stale', hasData);
+    $('#load').innerHTML = `<div class="lp" id="lp" role="status" aria-live="polite"><div class="lh"><span class="spin"></span><h3>Tallying your tunes</h3></div>
+      <ul id="ls">${STEPS.map((t, i) => `<li data-i="${i}"><span class="ic"></span><span>${t}</span><em></em></li>`).join('')}</ul>
+      ${hasData ? '' : `<div class="skg" aria-hidden="true"><div class="sk-k">${'<i class="sk"></i>'.repeat(4)}</div><div class="sk-p">${'<i class="sk"></i>'.repeat(3)}</div><div class="sk-r">${'<i class="sk"></i>'.repeat(5)}</div></div>`}</div>`;
+    clearInterval(this.timer);
+    this.timer = setInterval(() => { // never looks stalled: always creeping toward the next milestone
+      const cap = .06 + .94 * (this.done + .85) / STEPS.length;
+      this.p += (cap - this.p) * .05; this.paint();
+    }, 120);
+    this.p = .06; this.paint(); // head start: progress already underway
+    this.mark(0, 'Signed in');
+  },
+  mark(i, detail) {
+    if (!this.on || this.ok[i]) return; this.ok[i] = 1; this.done++;
+    const li = $(`#ls li[data-i="${i}"]`); if (li) { li.className = 'done'; li.querySelector('em').textContent = detail || ''; }
+    this.p = Math.max(this.p, .06 + .94 * this.done / STEPS.length); this.paint();
+    document.querySelectorAll('#ls li.on').forEach(l => l.classList.remove('on')); $('#ls li:not(.done)')?.classList.add('on');
+  },
+  stop() { this.on = false; clearInterval(this.timer); document.body.classList.remove('stale'); },
+  finish() {
+    this.stop(); this.p = 1; this.paint(); setTimeout(() => $('#bar').style.opacity = 0, 400);
+    $('#lp')?.classList.add('out'); setTimeout(() => !this.on && ($('#load').innerHTML = ''), 700);
+  },
+  fail(msg) {
+    this.stop(); $('#bar').style.opacity = 0;
+    $('#load').innerHTML = `<div class="lp"><p id="err" role="alert">${esc(msg)}</p><div><button class="btn tonal sm" id="retry">Try again</button></div></div>`;
+    $('#retry').onclick = loadAll;
+  }
+};
+
+// ---- Data: all three ranges load together; switching ranges only re-renders ----
+let cache = {}, S = {}, loading = false, updatedAt = 0, lastTry = 0;
+const RANGES = Object.keys(DAYS), ALLR = [...RANGES, 'week', 'year'];
+
+async function build() { // numbers + cover art for every range, from cached API data
+  RANGES.forEach(r => cache[r].T.forEach(t => { art[t.id] = img(t.album); byId[t.id] = t; }));
+  S = {};
+  if (hist) ALLR.forEach(r => S[r] = compute(r));
+  loader.mark(4, hist ? `${fmt(S.long_term.plays)} plays · ${fmt(S.long_term.minutes)} minutes` : 'Using Spotify’s top lists');
+  for (const id in info.t) if (info.t[id]?.art) art[id] ||= info.t[id].art;
+  const need = hist ? [...new Set(ALLR.flatMap(r => S[r].top.map(e => hist.t[e.i][3])))].filter(id => id && !art[id]) : [];
+  for (let i = 0; i < need.length; i += 50) {
+    try { (await api('/tracks?ids=' + need.slice(i, i + 50).join(','))).tracks.forEach(t => t && (art[t.id] = img(t.album))); }
+    catch (e) { if (e.message === 'auth') throw e; break; }
+  }
+  loader.mark(5, need.length ? `${need.length} covers fetched` : 'Covers ready');
+}
+
+async function loadAll() {
+  if (loading) return; loading = true; lastTry = Date.now();
+  importUi(); loader.start(!!cache.medium_term);
+  try {
+    const recentTask = (async () => {
+      recent = await api('/me/player/recently-played?limit=30'); let added = 0, err = '';
+      if (hist) {
+        if (sync.on()) { try { added += await sync.pull(); } catch (e) { err = e.message; sync.msg = 'Problem: ' + e.message; } }
+        added += await mergeRecent(recent.items);
+      }
+      importUi(); if (err) { $('#syncText').textContent = err; setSt('#syncSt', 'bad', 'Problem'); }
+      loader.mark(3, added ? `${added} new plays logged` : `${recent.items.length} recent plays checked`);
+    })();
+    const [tr, ar] = await Promise.all([
+      Promise.all(RANGES.map(r => api(`/me/top/tracks?time_range=${r}&limit=30`))).then(x => (loader.mark(1, `${x.reduce((n, v) => n + v.items.length, 0)} songs across 3 time ranges`), x)),
+      Promise.all(RANGES.map(r => api(`/me/top/artists?time_range=${r}&limit=50`))).then(x => (loader.mark(2, `${x.reduce((n, v) => n + v.items.length, 0)} artists`), x)),
+      recentTask
+    ]);
+    RANGES.forEach((r, i) => cache[r] = { T: tr[i].items, A: ar[i].items });
+    await build(); updatedAt = Date.now(); loader.finish(); render(); // render() starts the detail fetching for the range on screen
+  } catch (e) {
+    if (e.message === 'auth') return logout();
+    loader.fail(e.message);
+  } finally { loading = false; }
+}
+
+async function rebuild() { // after importing or removing history: no refetch needed
+  importUi(); if (!cache.medium_term) return loadAll();
+  try { await build(); render(); } catch (e) { if (e.message === 'auth') return logout(); loader.fail(e.message); }
+}
+
+// ---- Records and listening clock (need your streaming history) ----
+const memoed = (k, f) => memo[k] ??= f();
+const fmtH = h => `${h % 12 || 12} ${h < 12 ? 'AM' : 'PM'}`;
+const dateOf = k => new Date(k * 864e5).toLocaleDateString(undefined, { dateStyle: 'medium', timeZone: 'UTC' });
+const dkey = hi => settings.tz === 'utc' ? Math.floor(hi / 24) : Math.floor((hi * 36e5 - new Date(hi * 36e5).getTimezoneOffset() * 6e4) / 864e5);
+
+function records() {
+  return memoed(`rec|${settings.tz}|${settings.minDay}`, () => {
+    const day = new Map();
+    if (hist.h) for (const [hi, ms] of hist.h) { const k = dkey(hi); day.set(k, (day.get(k) || 0) + ms); }
+    else for (const [d, , ms] of hist.d) day.set(d, (day.get(d) || 0) + ms);
+    const all = [...day].sort((a, b) => a[0] - b[0]), ok = all.filter(([, ms]) => ms >= settings.minDay * 6e4);
+    let best = { n: 0 }, run = null, big = { ms: 0 };
+    for (const [k, ms] of all) if (ms > big.ms) big = { ms, k };
+    for (const [k] of ok) { run = run && k === run.end + 1 ? { ...run, end: k, n: run.n + 1 } : { start: k, end: k, n: 1 }; if (run.n > best.n) best = run; }
+    const latest = all.length ? all[all.length - 1][0] : 0, cur = run && run.end === latest ? run : { n: 0 };
+    let rp = { n: 0 }; for (const [d, i, , p] of hist.d) if (p > rp.n) rp = { n: p, d, name: hist.t[i][1] };
+    return { best, cur, big, rp, latest, day };
+  });
+}
+let ck = { h: null, d: null };
+function clock(r, fh = null, fd = null) {
+  return memoed(`ck|${r}|${settings.tz}|${fh}|${fd}`, () => {
+    const cut = cutOf(r, S[r].anchor), hrs = Array(24).fill(0), wk = Array(7).fill(0), loc = settings.tz !== 'utc';
+    if (hist.h) for (const [hi, ms] of hist.h) {
+      if (Math.floor(hi / 24) <= cut) continue;
+      const d = loc ? new Date(hi * 36e5) : null;
+      const H = loc ? d.getHours() : hi % 24, W = loc ? d.getDay() : (Math.floor(hi / 24) + 4) % 7;
+      if (fd == null || W === fd) hrs[H] += ms; if (fh == null || H === fh) wk[W] += ms;
+    } else for (const [day, , ms] of hist.d) if (day > cut) wk[(day + 4) % 7] += ms;
+    return { hrs, wk, has: !!hist.h };
+  });
+}
+function persona(hrs) {
+  const tot = hrs.reduce((a, b) => a + b, 0); if (!tot) return null;
+  let top = null;
+  for (const [name, a, b] of [['Early bird', 5, 9], ['Daytime listener', 9, 17], ['Evening listener', 17, 22], ['Night owl', 22, 5]]) {
+    let sum = 0, w = 0; for (let h = a; h !== b; h = (h + 1) % 24) { sum += hrs[h]; w++; }
+    if (!top || sum / w > top.dens) top = { name, a, b, dens: sum / w, share: sum / tot };
+  }
+  return { ...top, peak: hrs.indexOf(Math.max(...hrs)) };
+}
+function chart(vals, labels, every, kind, sel) {
+  const mx = Math.max(...vals, 1), pk = vals.indexOf(Math.max(...vals));
+  return `<div class="bch${sel != null ? ' hasel' : ''}">${vals.map((v, i) => `<div class="bc${i === sel ? ' sel' : ''}${sel == null && i === pk ? ' pk' : ''}" ${kind ? `data-ck="${kind}${i}" role="button" tabindex="0" aria-pressed="${i === sel}"` : ''} title="${esc(labels[i])} · ${fmt(v / 6e4)} min"><i style="height:${Math.max(2, v / mx * 100)}%;--i:${i}"></i>${i % every === 0 ? `<span>${esc(labels[i])}</span>` : ''}</div>`).join('')}</div>`;
+}
+const JD = [1, 2, 3, 4, 5, 6, 0], WKN = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'], sumA = a => a.reduce((x, y) => x + y, 0);
+function clockInner(r) {
+  const C0 = clock(r), wk = JD.map(i => C0.wk[i]), wt = sumA(wk), wp = wk.indexOf(Math.max(...wk)), ds = ck.d == null ? null : JD.indexOf(ck.d);
+  let h = `<h3>Your listening clock <small class="note" style="font-weight:400;font-size:.9rem">${settings.tz === 'utc' ? 'UTC' : 'your time zone'}</small></h3>`;
+  if (!wt) return h + '<p class="note">No listening in this range yet.</p>';
+  h += `<div class="panel"><b class="pn">${WKN[wp]}s</b><p>Your busiest day: ${Math.round(wk[wp] / wt * 100)}% of your listening. Tap a day to see its hours.</p>${chart(wk, WKN, 1, 'd', ds)}</div>`;
+  if (ds != null) {
+    if (!C0.has) return h + '<div class="panel" style="margin-top:12px"><p style="margin:0">Your saved history has no timestamps yet. Add your export files once more to see hours.</p></div>';
+    const C = clock(r, null, ck.d), hp = C.hrs.indexOf(Math.max(...C.hrs)), t = sumA(C.hrs);
+    h += `<div class="panel" style="margin-top:12px"><b class="pn">${WKN[ds]}s by hour</b><p>${t ? `Peak hour: ${fmtH(hp)}. ${fmt(t / 6e4)} minutes in total.` : 'No listening on this day in this range.'}</p>${chart(C.hrs, C.hrs.map((_, i) => `${i % 12 || 12}${i < 12 ? 'a' : 'p'}`), 3, null, null)}</div>`;
+  }
+  return h;
+}
+
+function calendarHtml() {
+  if (!hist) return '';
+  const R = records(), L = R.latest; if (!L) return '';
+  const WEEKS = 53, mon = L - ((L + 4) % 7 + 6) % 7, start = mon - (WEEKS - 1) * 7, vals = [], min = settings.minDay * 6e4;
+  let active = 0, cells = '', months = '', lastM = -1;
+  for (let k = start; k <= L; k++) { const ms = R.day.get(k) || 0; if (ms) vals.push(ms); if (ms >= min) active++; }
+  vals.sort((a, b) => a - b); const q = vals[Math.floor(vals.length * .9)] || 1;
+  for (let k = start; k <= L; k++) {
+    const ms = R.day.get(k) || 0, lv = ms ? 1 + Math.min(3, Math.floor(ms / q * 3)) : 0;
+    cells += `<i class="cd l${lv}" data-k="${k}" data-m="${ms}" title="${esc(dateOf(k))} · ${fmt(ms / 6e4)} min"></i>`;
+    if ((k - start) % 7 === 0) { const m = new Date(k * 864e5).getUTCMonth(); if (m !== lastM) { lastM = m; months += `<span style="left:${(k - start) / 7 * 15}px">${new Date(k * 864e5).toLocaleDateString(undefined, { month: 'short', timeZone: 'UTC' })}</span>`; } }
+  }
+  return `<section id="calSec"><h3>Listening calendar <small class="note" style="font-weight:400;font-size:.9rem">last 12 months</small></h3><div class="panel cal"><div class="cscroll" id="calScroll"><div class="cmonths" style="width:${WEEKS * 15}px">${months}</div><div class="cgrid">${cells}</div></div><p class="note" id="calInfo">${fmt(active)} active days. Tap a day to see its minutes.</p><div class="clegend">Less <i class="cd"></i><i class="cd l1"></i><i class="cd l2"></i><i class="cd l3"></i><i class="cd l4"></i> More</div></div></section>`;
+}
+const calEnd = () => { const c = $('#calScroll'); if (c) c.scrollLeft = c.scrollWidth; };
+
+async function shareRecap() {
+  const btn = $('#shareBtn'), t0 = btn.textContent; btn.disabled = true; btn.textContent = 'Making image…';
+  try {
+    const W = 1080, H = 1560, c = document.createElement('canvas'); c.width = W; c.height = H; const x = c.getContext('2d');
+    const ac = getComputedStyle(document.documentElement).getPropertyValue('--accent-dynamic').trim() || '#00695c';
+    const load = u => new Promise(res => { if (!u) return res(null); const im = new Image(); im.crossOrigin = 'anonymous'; im.onload = () => res(im); im.onerror = () => res(null); im.src = u; setTimeout(() => res(null), 6000); });
+    const songs = curSongs.slice(0, 3), arts = (curA || []).slice(0, 3), label = document.querySelector('.range [aria-pressed=true]')?.textContent || '';
+    const [si, ai] = await Promise.all([Promise.all(songs.map(s => load(s.art))), Promise.all(arts.map(a => load(img(a))))]);
+    const F = 'system-ui,-apple-system,Segoe UI,Roboto,sans-serif';
+    const rr = (a, b, w, h, r) => { x.beginPath(); x.moveTo(a + r, b); x.arcTo(a + w, b, a + w, b + h, r); x.arcTo(a + w, b + h, a, b + h, r); x.arcTo(a, b + h, a, b, r); x.arcTo(a, b, a + w, b, r); x.closePath(); };
+    const fit = (t, w) => { t = String(t || ''); if (x.measureText(t).width <= w) return t; while (t.length > 1 && x.measureText(t + '…').width > w) t = t.slice(0, -1); return t + '…'; };
+    x.fillStyle = '#0d1411'; x.fillRect(0, 0, W, H);
+    const g = x.createRadialGradient(W * .9, 0, 0, W * .9, 0, 1100); g.addColorStop(0, ac); g.addColorStop(1, 'transparent'); x.globalAlpha = .55; x.fillStyle = g; x.fillRect(0, 0, W, H); x.globalAlpha = 1;
+    x.fillStyle = '#fff'; x.textBaseline = 'alphabetic';
+    x.font = `800 72px ${F}`; x.fillText('Tally', 72, 130); x.font = `600 40px ${F}`; x.globalAlpha = .75; x.textAlign = 'right'; x.fillText(label, W - 72, 128); x.textAlign = 'left'; x.globalAlpha = 1;
+    [[kpiData.min, 'minutes'], [kpiData.plays, 'plays'], [kpiData.strk, 'day streak']].forEach(([v, l], i) => { const px = 72 + i * 320; x.font = `800 84px ${F}`; x.fillText(v == null ? '–' : fmt(v), px, 280); x.font = `500 32px ${F}`; x.globalAlpha = .7; x.fillText(l, px, 330); x.globalAlpha = 1; });
+    x.font = `800 48px ${F}`; x.fillText('Top songs', 72, 450);
+    songs.forEach((s, i) => { const y = 490 + i * 180;
+      x.save(); rr(72, y, 150, 150, 28); x.clip(); x.fillStyle = '#26312c'; x.fillRect(72, y, 150, 150); if (si[i]) x.drawImage(si[i], 72, y, 150, 150); x.restore();
+      x.fillStyle = '#fff'; x.font = `800 46px ${F}`; x.fillText(fit(`${i + 1}. ${s.name}`, W - 300), 250, y + 62); x.font = `500 34px ${F}`; x.globalAlpha = .7; x.fillText(fit(`${s.artist}${s.badge ? ' · ' + s.badge : ''}`, W - 300), 250, y + 114); x.globalAlpha = 1; });
+    x.font = `800 48px ${F}`; x.fillText('Top artists', 72, 1080);
+    arts.forEach((a, i) => { const cx = 72 + i * 320 + 130, cy = 1140 + 130;
+      x.save(); x.beginPath(); x.arc(cx, cy, 130, 0, 7); x.clip(); x.fillStyle = '#26312c'; x.fillRect(cx - 130, cy - 130, 260, 260); if (ai[i]) x.drawImage(ai[i], cx - 130, cy - 130, 260, 260); x.restore();
+      x.fillStyle = '#fff'; x.textAlign = 'center'; x.font = `700 36px ${F}`; x.fillText(fit(`${i + 1}. ${a.name}`, 290), cx, 1470); x.textAlign = 'left'; });
+    const blob = await new Promise(r => c.toBlob(r, 'image/png')), file = new File([blob], 'tally-recap.png', { type: 'image/png' });
+    if (navigator.canShare?.({ files: [file] })) await navigator.share({ files: [file], title: 'My Tally recap' }).catch(() => {});
+    else { const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'tally-recap.png'; a.click(); }
+  } catch { btn.textContent = 'Couldn’t make the image'; await new Promise(r => setTimeout(r, 2200)); }
+  btn.disabled = false; btn.textContent = t0;
+}
+function pickClock(k) {
+  const i = +k.slice(1); ck.d = ck.d === JD[i] ? null : JD[i];
+  const sec = $('#clockSec'); if (!sec) return;
+  const y = scrollY; sec.classList.add('still'); sec.innerHTML = clockInner(range); scrollTo(0, y);
+}
+function insights(r) {
+  if (!hist) return `<section class="panel" id="insSec"><h3>Listening clock and records</h3><p class="note" style="margin:8px 0 0">Add your streaming history below to unlock your listening clock, streaks and records.</p></section>`;
+  const R = records(), C = clock(r), P = C.has ? persona(C.hrs) : null;
+  const WK = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'], wk = [1, 2, 3, 4, 5, 6, 0].map(i => C.wk[i]), wt = wk.reduce((a, b) => a + b, 0), wp = wk.indexOf(Math.max(...wk));
+  const range_ = (a, b) => a === b ? dateOf(a) : dateOf(a) + ' to ' + dateOf(b);
+  return `<section id="recSec"><h3>Records <small class="note" style="font-weight:400;font-size:.9rem">all time</small></h3><div class="stats">
+      <div class="card rc c1" style="--i:0"><small>Longest streak</small><b data-n="${R.best.n}">0</b><small>${R.best.n ? 'days · ' + range_(R.best.start, R.best.end) : 'days'}</small></div>
+      <div class="card rc c4" style="--i:1"><small>Current streak</small><b data-n="${R.cur.n}">0</b><small>days · through ${R.latest ? dateOf(R.latest) : '–'}</small></div>
+      <div class="card rc c2" style="--i:2"><small>Biggest listening day</small><b data-n="${R.big.ms / 6e4}">0</b><small>minutes · ${R.big.k ? dateOf(R.big.k) : '–'}</small></div>
+      <div class="card rc c3" style="--i:3"><small>Most replays in a day</small><b data-n="${R.rp.n}">0</b><small>${R.rp.n ? esc(R.rp.name) + ' · ' + dateOf(R.rp.d) : '–'}</small></div>
+    </div></section>
+    <section id="clockSec">${clockInner(r)}</section>`;
+}
+
+// ---- Expandable details, fetched in the background ----
+const info = { t: {}, a: {}, m: {}, l: {}, lt: {} }, pend = new Set(), byId = {};
+let uid = 0, DET = {}, curSongs = [], openArt = null;
+const reg = o => { const k = 'k' + uid++; DET[k] = o; return k; };
+const fresh = r => r && r.v === 2 && !(r.n !== undefined && r.s === undefined) && Date.now() - r.at < (r.fail ? 36e5 : 6048e5);
+const fromTrack = t => ({ album: t.album?.name, date: t.album?.release_date, type: t.album?.album_type, no: t.track_number, of: t.album?.total_tracks, dur: t.duration_ms, ex: t.explicit, pop: t.popularity, isrc: t.external_ids?.isrc, credits: (t.artists || []).map(a => a.name) });
+const dur = ms => `${Math.floor(ms / 6e4)}:${String(Math.floor(ms / 1e3) % 60).padStart(2, '0')}`;
+
+function topArtists(list) {
+  const m = new Map();
+  list.forEach(s => { const n = (s.artists || [s.artist])[0]; m.set(n, (m.get(n) || 0) + 1); }); // main artist only, not features
+  return [...m].sort((a, b) => b[1] - a[1]).slice(0, 3);
+}
+function agg() { // per-song and per-artist totals from your history
+  return memoed('agg', () => {
+    const C = canon(), T = new Map(), A = new Map(), tid = new Map(hist.t.map((x, i) => [x[3], C.c[i]]));
+    for (const [day, i, ms, p] of hist.d) {
+      const ci = C.c[i], t = T.get(ci) || { plays: 0, ms: 0, first: day, last: day, bn: 0, bd: 0 };
+      t.plays += p; t.ms += ms; t.first = Math.min(t.first, day); t.last = Math.max(t.last, day); if (p > t.bn) { t.bn = p; t.bd = day; } T.set(ci, t);
+      const n = hist.t[i][2], a = A.get(n) || { plays: 0, ms: 0, first: day, last: day, top: i, tp: 0 };
+      a.plays += p; a.ms += ms; a.first = Math.min(a.first, day); a.last = Math.max(a.last, day); A.set(n, a);
+    }
+    for (const [i, t] of T) { const a = A.get(hist.t[i][2]); if (t.plays > a.tp) { a.tp = t.plays; a.top = i; } }
+    return { T, A, tid };
+  });
+}
+const cap = s => String(s).replace(/\b\w/g, c => c.toUpperCase());
+const fdate = d => { const p = String(d || '').split('-'); return p.length === 3 ? new Date(Date.UTC(+p[0], +p[1] - 1, +p[2])).toLocaleDateString(undefined, { dateStyle: 'medium', timeZone: 'UTC' }) : (d || ''); };
+const tile = (lb, vl, wide) => `<div class="tl${wide ? ' w' : ''}"><span class="lb">${lb}</span><span class="vl">${vl}</span></div>`;
+const sect = (title, tiles) => tiles.length ? `<div class="ds"><div class="dlb">${title}</div><div class="tg">${tiles.join('')}</div></div>` : '';
+const chips = l => l.map(x => `<span class="chp">${esc(x)}</span>`).join('');
+const skel = '<span class="sk" style="display:block;height:18px;width:70%;border-radius:9px"></span>';
+
+// Genres, origin and similar profile facts come from MusicBrainz (free, no key), looked up once per artist and cached.
+const JUNK = /^(seen live|favou?rites?|love|awesome|\d+|under \d+ listeners|spotify|check out|american|british|usa|uk|male vocalists?|female vocalists?|my music)$/i;
+const mbq = []; let mbRun = false;
+const mbKey = n => String(n || '').toLowerCase();
+const mbOf = n => { const r = info.m[mbKey(n)]; return fresh(r) && !r.fail && !r.none ? r : null; };
+async function fetchMB(name) {
+  const q = `artist:"${name.replace(/(["\\])/g, '\\$1')}"`;
+  const r = await fetch('https://musicbrainz.org/ws/2/artist/?fmt=json&limit=5&query=' + encodeURIComponent(q));
+  if (!r.ok) throw new Error('mb ' + r.status);
+  const list = (await r.json()).artists || [], want = name.toLowerCase();
+  const m = list.find(x => x.name?.toLowerCase() === want && x.score >= 90) || (list[0]?.score >= 98 ? list[0] : null);
+  if (!m) return { at: Date.now(), v: 2, none: 1 };
+  const ls_ = m['life-span'] || {};
+  return { at: Date.now(), v: 2, type: m.type, area: m.area?.name || m.country, begin: (ls_.begin || '').slice(0, 4), end: (ls_.end || '').slice(0, 4), ended: !!ls_.ended,
+    tags: (m.tags || []).filter(t => t.count > 0 && !JUNK.test(t.name)).sort((a, b) => b.count - a.count).slice(0, 4).map(t => cap(t.name)) };
+}
+function ensureMB(name, urgent) {
+  const k = mbKey(name); if (!k) return;
+  if (fresh(info.m[k])) return;
+  if (pend.has('m' + k)) { const i = mbq.indexOf(name); if (urgent && i > 0) mbq.unshift(...mbq.splice(i, 1)); return; }
+  pend.add('m' + k); urgent ? mbq.unshift(name) : mbq.push(name); runMB();
+}
+async function runMB() {
+  if (mbRun) return; mbRun = true;
+  while (mbq.length) {
+    const name = mbq.shift(), k = mbKey(name);
+    try { info.m[k] = await fetchMB(name); } catch { info.m[k] = { at: Date.now(), v: 2, fail: 1 }; }
+    pend.delete('m' + k); refreshOpen();
+    await new Promise(r => setTimeout(r, 1100)); // MusicBrainz asks for at most one request per second
+  }
+  mbRun = false; idb.set('info', info);
+}
+// Last.fm (optional, needs a free API key): better genre tags, listener counts, similar artists
+const lfmKey = () => (ls.get('lfmKey') || '').trim();
+const fmtC = n => new Intl.NumberFormat(undefined, { notation: 'compact', maximumFractionDigits: 1 }).format(n);
+const lq = []; let lRun = false;
+const lkey = (a, t) => mbKey(t ? a + '|' + t : a);
+const lOf = (a, t) => { const r = (t ? info.lt : info.l)[lkey(a, t)]; return fresh(r) && !r.fail && !r.none ? r : null; };
+async function lfm(params) {
+  const r = await fetch('https://ws.audioscrobbler.com/2.0/?' + new URLSearchParams({ ...params, api_key: lfmKey(), format: 'json', autocorrect: 1 }));
+  if (!r.ok && r.status !== 403) throw new Error('lfm ' + r.status);
+  const d = await r.json().catch(() => ({}));
+  if (d.error === 10 || d.error === 26 || r.status === 403) throw new Error('key');
+  return d.error ? null : d;
+}
+const lTags = l => (Array.isArray(l) ? l : l ? [l] : []).map(t => t.name).filter(n => n && !JUNK.test(n)).slice(0, 5).map(cap);
+async function fetchLfm(a, t) {
+  const d = await lfm(t ? { method: 'track.getinfo', artist: a, track: t } : { method: 'artist.getinfo', artist: a }), x = d && (t ? d.track : d.artist);
+  if (!x) return { at: Date.now(), v: 2, none: 1 };
+  return { at: Date.now(), v: 2, tags: lTags(t ? x.toptags?.tag : x.tags?.tag), listeners: +(x.listeners ?? x.stats?.listeners) || 0, plays: +(x.playcount ?? x.stats?.playcount) || 0,
+    similar: t ? [] : (Array.isArray(x.similar?.artist) ? x.similar.artist : []).slice(0, 5).map(y => y.name) };
+}
+function ensureLFM(a, t, urgent) {
+  if (!lfmKey() || !a) return;
+  const store = t ? info.lt : info.l, k = lkey(a, t), pk = (t ? 'lt' : 'l') + k;
+  if (fresh(store[k])) return;
+  if (pend.has(pk)) { const i = lq.findIndex(x => x.pk === pk); if (urgent && i > 0) lq.unshift(...lq.splice(i, 1)); return; }
+  pend.add(pk); const job = { a, t, k, pk, store }; urgent ? lq.unshift(job) : lq.push(job); runLFM();
+}
+async function runLFM() {
+  if (lRun) return; lRun = true;
+  while (lq.length) {
+    const j = lq.shift();
+    try { j.store[j.k] = await fetchLfm(j.a, j.t); }
+    catch (e) {
+      j.store[j.k] = { at: Date.now(), v: 2, fail: 1 };
+      if (e.message === 'key') { lq.splice(0).forEach(x => pend.delete(x.pk)); $('#lfmText').textContent = 'Last.fm rejected the key. Check it and save again.'; }
+    }
+    pend.delete(j.pk); refreshOpen(); await new Promise(r => setTimeout(r, 260));
+  }
+  lRun = false; idb.set('info', info);
+}
+function lfmUi() {
+  $('#lfmKey').value = lfmKey(); setSt('#lfmSt', lfmKey() ? 'on' : 'off', lfmKey() ? 'Connected' : 'No key');
+  $('#lfmText').innerHTML = lfmKey() ? 'Connected. Extra genre tags from Last.fm show up when you expand a song or artist.'
+    : 'Optional. Adds better genre tags. Get a free key at <a href="https://www.last.fm/api/account/create" target="_blank" rel="noopener">last.fm/api/account/create</a> (any app name works), then paste it here.';
+}
+function artWeights(r) {
+  return memoed('aw|' + r, () => { const cut = cutOf(r, S[r].anchor), m = new Map();
+    for (const [day, i, , p] of hist.d) { if (day <= cut) continue; const n = hist.t[i][2]; m.set(n, (m.get(n) || 0) + p); }
+    return [...m].sort((x, y) => y[1] - x[1]).slice(0, 15); });
+}
+function artistsFor(r) {
+  if (!hist || !S[r] || !BASE[r]) return null;
+  return memoed('af|' + r, () => { const objs = new Map(); for (const k of RANGES) for (const a of cache[k]?.A || []) if (!objs.has(a.name)) objs.set(a.name, a);
+    return artWeights(r).map(([n]) => objs.get(n)).filter(Boolean).slice(0, 12); });
+}
+function genreStats(r, A) {
+  const ws = hist && S[r] ? artWeights(r) : A.slice(0, 15).map((a, i) => [a.name, A.length - i]), g = {};
+  for (const [n, w] of ws) genresOf(n).slice(0, 3).forEach((x, j) => g[x] = (g[x] || 0) + w / (j + 1));
+  return { list: Object.entries(g).sort((a, b) => b[1] - a[1]).slice(0, 8), wait: ws.some(([n]) => genrePending(n)), ws };
+}
+const gCardHtml = G => { const t = G.list.slice(0, 3);
+  if (!t.length) return `<small>Top genres</small><b style="font-size:1.3rem">${G.wait ? 'Finding…' : '–'}</b><small>${G.wait ? 'looking up your artists' : 'no genre data found'}</small>`;
+  return `<small>Top genres</small><ol class="g3">${t.map(([n], i) => `<li><em class="gd" style="background:var(--g${i})"></em><span>${esc(n)}</span></li>`).join('')}</ol><small>weighted by your plays</small>`; };
+const gBarsHtml = G => { const mx = G.list[0]?.[1] || 1; return G.list.map(([n, v], i) => `<div><span><em class="gd" style="background:var(--g${i % 8})"></em>${esc(n)}</span><i style="width:${Math.max(4, v / mx * 100)}%;--i:${i};background:var(--g${i % 8})"></i></div>`).join(''); };
+let curA = [];
+function updateGenres() {
+  if (!$('#gCard')) return; const G = genreStats(range, curA);
+  $('#gCard').innerHTML = gCardHtml(G); $('#gBars').innerHTML = gBarsHtml(G); $('#gSec').hidden = !G.list.length;
+}
+function genresOf(name) {
+  const out = [];
+  for (const r of RANGES) for (const a of cache[r]?.A || []) if (a.name === name) out.push(...(a.genres || []));
+  out.push(...(lOf(name)?.tags || []), ...(mbOf(name)?.tags || []));
+  return [...new Map(out.map(g => [g.toLowerCase().replace(/[^a-z0-9]/g, ''), cap(g)])).values()].slice(0, 5);
+}
+const genrePending = n => pend.has('m' + mbKey(n)) || pend.has('l' + lkey(n));
+
+function songDetail(s) {
+  const f = info.t[s.id], inf = byId[s.id] ? fromTrack(byId[s.id]) : (fresh(f) && !f.fail ? f : null), main = (s.artists || [s.artist])[0], tr = [];
+  if (inf) {
+    if (inf.album) tr.push(tile('Album', esc(inf.album) + (inf.type ? ` <span class="sub">· ${cap(inf.type)}</span>` : ''), 1));
+    if (inf.date) tr.push(tile('Released', esc(fdate(inf.date))));
+    if (inf.dur) tr.push(tile('Length', dur(inf.dur)));
+    if (inf.no) tr.push(tile('Track', inf.of > 1 ? `${inf.no} of ${inf.of}` : inf.no));
+    if (inf.credits?.length > 1) tr.push(tile('Credits', esc(inf.credits.join(', ')), 1));
+  } else if (pend.has('t' + s.id)) tr.push(tile('Details', skel, 1));
+  const gn = genresOf(main);
+  if (gn.length) tr.push(tile('Genre', chips(gn), 1)); else if (genrePending(main)) tr.push(tile('Genre', skel, 1));
+  if (inf?.ex) tr.push(tile('Content', 'Explicit'));
+  let h = sect('Track', tr);
+  if (hist) {
+    const A = agg(), ix = s.ix ?? A.tid.get(s.id), st = ix != null ? A.T.get(ix) : null;
+    if (st) h += sect('Your listening', [tile('Plays', fmt(st.plays)), tile('Minutes', fmt(st.ms / 6e4)), tile('First played', dateOf(st.first)), tile('Last played', dateOf(st.last)),
+      ...(st.bn > 1 ? [tile('Best day', `${st.bn} plays on ${dateOf(st.bd)}`, 1)] : [])]);
+  }
+  if (s.link && s.link !== '#') h += `<a href="${esc(s.link)}" target="_blank" rel="noopener">Open in Spotify</a>`;
+  return h || '<div>No extra details available.</div>';
+}
+function artistCard(a) {
+  const f = info.a[a.id], ex = fresh(f) && !f.fail ? f : null, mb = mbOf(a.name), H = hist ? agg().A.get(a.name) : null, pm = pend.has('m' + mbKey(a.name));
+  const all = curSongs.filter(s => (s.artists || [s.artist]).includes(a.name)), mine = all.filter(s => (s.artists || [s.artist])[0] === a.name), feat = all.length - mine.length;
+  const gn = genresOf(a.name), lf = lOf(a.name), pr = [];
+  if (gn.length) pr.push(tile('Genres', chips(gn), 1));
+  if (mb?.type) pr.push(tile('Type', mb.type === 'Person' ? 'Solo artist' : esc(mb.type)));
+  if (mb?.area) pr.push(tile('Origin', esc(mb.area)));
+  if (mb?.begin) pr.push(tile(mb.type === 'Person' ? 'Born' : mb.type === 'Group' ? 'Formed' : 'Since', mb.begin + (mb.ended && mb.type !== 'Person' ? '–' + (mb.end || '?') : '')));
+  if (!mb && !lf && (pm || pend.has('l' + lkey(a.name)))) pr.push(tile('Profile', skel, 1));
+  let h = sect('Profile', pr);
+  if (all.length) h += sect('In your top list', [
+    ...(mine.length ? [tile(mine.length === 1 ? 'Song' : 'Songs', mine.length), ...(feat ? [tile('Featured on', feat)] : [])] : [tile('Featured on', feat)]),
+    tile('Tracks', esc(all.slice(0, 4).map(s => s.name).join(', ')) + (all.length > 4 ? ` +${all.length - 4} more` : ''), 1)]);
+  if (H) h += sect('Your listening', [tile('Plays', fmt(H.plays)), tile('Minutes', fmt(H.ms / 6e4)), tile('First played', dateOf(H.first)), tile('Last played', dateOf(H.last)),
+    tile('Most played', `${esc(hist.t[H.top][1])} <span class="sub">· ${fmt(H.tp)} plays</span>`, 1)]);
+  const rl = [];
+  if (ex?.last) { rl.push(tile('Latest release', `${esc(ex.last.name)} <span class="sub">· ${esc(fdate(ex.last.date))}</span>`, 1)); if (ex.n) rl.push(tile('Releases', fmt(ex.n))); if (ex.s) rl.push(tile('Songs', fmt(ex.s))); }
+  else if (pend.has('a' + a.id)) rl.push(tile('Latest release', skel, 1));
+  h += sect('Releases', rl);
+  return h + (a.external_urls?.spotify ? `<a href="${esc(a.external_urls.spotify)}" target="_blank" rel="noopener">Open in Spotify</a>` : '');
+}
+const fillDet = li => { li.querySelector('.dt').innerHTML = songDetail(DET[li.dataset.k].s); };
+const fillArt = () => { if (openArt) openArt.querySelector('.ad').innerHTML = artistCard(DET[openArt.dataset.k].a); };
+const refreshOpen = () => { updateGenres(); document.querySelectorAll('.row.open').forEach(fillDet); fillArt(); };
+function toggleRow(li) {
+  const o = !li.classList.contains('open');
+  document.querySelectorAll('.row.open').forEach(r => { r.classList.remove('open'); r.querySelector('.rh').setAttribute('aria-expanded', 'false'); });
+  if (!o) return;
+  const s = DET[li.dataset.k].s, main = (s.artists || [s.artist])[0]; ensureLFM(main, s.name, true); ensureLFM(main, null, true); if (!genresOf(main).length) ensureMB(main, true);
+  li.classList.add('open'); li.querySelector('.rh').setAttribute('aria-expanded', 'true'); fillDet(li);
+  setTimeout(() => li.classList.contains('open') && li.scrollIntoView({ block: 'nearest', behavior: 'smooth' }), 480);
+}
+
+// ---- Artist card: colours are pulled from the artist's photo ----
+const pal = {};
+function hsl(h, s, l) { return `hsl(${Math.round(h)} ${Math.round(s * 100)}% ${Math.round(l * 100)}%)`; }
+function palette(url) {
+  return pal[url] ||= new Promise(res => {
+    const im = new Image(); im.crossOrigin = 'anonymous';
+    im.onerror = () => res(null);
+    im.onload = () => { try {
+      const n = 32, c = document.createElement('canvas'); c.width = c.height = n;
+      const x = c.getContext('2d', { willReadFrequently: true }); x.drawImage(im, 0, 0, n, n);
+      const d = x.getImageData(0, 0, n, n).data, bins = Array.from({ length: 24 }, () => ({ w: 0, s: 0, cx: 0, cy: 0 }));
+      for (let i = 0; i < d.length; i += 4) {
+        const r = d[i] / 255, g = d[i + 1] / 255, b = d[i + 2] / 255, mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2, dl = mx - mn;
+        if (d[i + 3] < 200 || l < .1 || l > .94) continue;
+        const s = dl === 0 ? 0 : dl / (1 - Math.abs(2 * l - 1));
+        let h = dl === 0 ? 0 : mx === r ? ((g - b) / dl) % 6 : mx === g ? (b - r) / dl + 2 : (r - g) / dl + 4; h = (h * 60 + 360) % 360;
+        const w = s * s * (1 - Math.abs(l - .5)) + .01, bin = bins[Math.floor(h / 15) % 24];
+        bin.w += w; bin.s += s * w; bin.cx += Math.cos(h * Math.PI / 180) * w; bin.cy += Math.sin(h * Math.PI / 180) * w;
+      }
+      const ord = bins.map((b, i) => [b, i]).sort((p, q) => q[0].w - p[0].w), top = ord[0][0];
+      if (!top.w) return res(null);
+      const H = b => (Math.atan2(b.cy, b.cx) * 180 / Math.PI + 360) % 360, h1 = H(top), s1 = Math.max(.08, Math.min(.85, top.s / top.w));
+      const dist = (a, b) => Math.min(Math.abs(a - b), 360 - Math.abs(a - b));
+      const sec = ord.slice(1).find(([b]) => b.w > top.w * .15 && dist(H(b), h1) >= 40);
+      const h2 = sec ? H(sec[0]) : (h1 + 35) % 360, s2 = sec ? Math.max(.08, Math.min(.85, sec[0].s / sec[0].w)) : s1;
+      res({ c1: hsl(h1, s1 * .85, .24), c2: hsl(h2, s2 * .9, .36), c3: hsl(h1, s1 * .7, .1), ac: hsl(h1, Math.min(1, s1 + .15), .74) });
+    } catch { res(null); } };
+    im.src = url;
+  });
+}
+const applyPal = (f, p) => p && ['c1', 'c2', 'c3', 'ac'].forEach(k => f.style.setProperty('--' + k, p[k]));
+
+function flip(grid, mutate) { // glide the other artists to their new spots instead of jumping
+  const kids = [...grid.children], calm = settings.calm || matchMedia('(prefers-reduced-motion:reduce)').matches;
+  const before = new Map(kids.map(k => [k, k.getBoundingClientRect()]));
+  mutate();
+  if (calm) return;
+  kids.forEach(k => {
+    if (k.classList.contains('open')) return;
+    const a = before.get(k), b = k.getBoundingClientRect(), dx = a.left - b.left, dy = a.top - b.top;
+    if (Math.abs(dx) + Math.abs(dy) > 1) k.animate([{ transform: `translate(${dx}px,${dy}px)` }, { transform: 'none' }], { duration: 520, easing: 'cubic-bezier(.34,1.3,.64,1)' });
+  });
+}
+const closeArt = () => openArt && toggleArtist(openArt);
+function toggleArtist(f) {
+  const grid = f.parentElement, kids = [...grid.querySelectorAll('.af')], cols = getComputedStyle(grid).gridTemplateColumns.split(' ').length, was = openArt;
+  const setOpen = (el, on) => {
+    el.classList.toggle('open', on); el.querySelector('.ahd').setAttribute('aria-expanded', on);
+    const i = kids.indexOf(el); el.style.order = on ? Math.floor(i / cols) * cols * 2 : i * 2 + 1; // an open artist takes the start of its row; its neighbours drop below
+    if (!on) { el.querySelector('.ad').innerHTML = ''; el.style.animation = 'none'; }
+  };
+  flip(grid, () => {
+    if (was) setOpen(was, false);
+    if (was !== f) { setOpen(f, true); f.style.animation = ''; openArt = f; fillArt(); } else openArt = null;
+  });
+  if (openArt !== f) return;
+  const a = DET[f.dataset.k].a; ensureMB(a.name, true); ensureLFM(a.name, null, true);
+  palette(img(a)).then(p => openArt === f && applyPal(f, p));
+  setTimeout(() => openArt === f && f.scrollIntoView({ block: 'nearest', behavior: 'smooth' }), 120);
+}
+
+async function fetchInfo(k, id) {
+  if (k === 't') { const t = await api('/tracks/' + id); return { at: Date.now(), v: 2, ...fromTrack(t), art: img(t.album) }; }
+  let d = await api(`/artists/${id}/albums?include_groups=album,single&limit=10`), items = d.items.slice();
+  for (let off = 10; off < d.total && off < 50; off += 10) { try { items.push(...(await api(`/artists/${id}/albums?include_groups=album,single&limit=10&offset=${off}`)).items); } catch { break; } }
+  const l = items.reduce((m, x) => !m || x.release_date > m.release_date ? x : m, null);
+  return { at: Date.now(), v: 2, n: d.total, s: items.reduce((a, x) => a + (x.total_tracks || 0), 0) || 1, last: l && { name: l.name, date: l.release_date } };
+}
+const wanted = r => [
+  ...(hist && S[r] ? S[r].top.slice(0, settings.songs).map(e => ['t', hist.t[e.i][3]]).filter(([, id]) => id && !byId[id]) : []),
+  ...(cache[BASE[r] || r]?.A || []).slice(0, 12).map(a => ['a', a.id])];
+let pausedUntil = 0; const triedAlt = new Set();
+function swapPh(id, url) { art[id] ||= url; document.querySelectorAll(`.ph[data-ids~="${id}"]`).forEach(el => { const im = document.createElement('img'); im.src = url; im.alt = ''; el.replaceWith(im); tintImg(im); }); }
+// Song boxes pick up a soft tint from their cover
+function tintImg(im) {
+  const li = im.closest('.row'); if (!li || li.dataset.tint || !im.src) return; li.dataset.tint = 1;
+  palette(im.src).then(p => { const m = p && /hsl\((\d+) (\d+)%/.exec(p.ac); if (m) li.style.setProperty('--tint', `hsl(${m[1]} ${m[2]}% 46%)`); });
+}
+async function prefetch(list, isRetry) { // quietly gathers details so they're ready when you tap
+  const todo = list.filter(([k, id]) => id && !fresh(info[k][id]) && !pend.has(k + id)); let n = 0;
+  todo.forEach(([k, id]) => pend.add(k + id));
+  const worker = async () => {
+    while (n < todo.length) {
+      const job = todo[n++], [k, id] = job;
+      if (Date.now() < pausedUntil) await new Promise(r => setTimeout(r, pausedUntil - Date.now()));
+      try { info[k][id] = await fetchInfo(k, id); }
+      catch (e) {
+        if (/rate limiting/.test(e.message) && (job.tries = (job.tries || 0) + 1) <= 4) { pausedUntil = Date.now() + 20000; todo.push(job); continue; } // Spotify asked us to slow down: wait, then retry (never cached as a failure)
+        info[k][id] = { at: Date.now(), v: 2, fail: 1 };
+      }
+      pend.delete(k + id); const r = info[k][id];
+      if (k === 't' && r.art) swapPh(id, r.art);
+      refreshOpen(); await new Promise(r => setTimeout(r, 150));
+    }
+  };
+  if (todo.length) { await worker(); idb.set('info', info); }
+  if (!isRetry) retryCovers();
+}
+function retryCovers() { // songs still without a cover: try the same song's other Spotify ids
+  if (!hist) return; const C = canon(), list = [];
+  for (const r of RANGES) for (const e of S[r]?.top.slice(0, settings.songs) || []) {
+    const ids = C.ids.get(e.i) || [], have = ids.find(x => art[x] || info.t[x]?.art);
+    if (have) { swapPh(have, art[have] || info.t[have].art); ids.forEach(x => swapPh(x, art[have] || info.t[have].art)); continue; }
+    ids.forEach(x => { if (!triedAlt.has(x)) { triedAlt.add(x); list.push(['t', x]); } });
+  }
+  if (list.length) prefetch(list, true);
+}
+
+// Drag the cover and it stretches like rubber; tap it and it gets pushed away from your finger. It always springs home.
+
+function render() {
+  const out = $('#stats'), c = cache[BASE[range] || range]; if (!c) return;
+  uid = 0; DET = {}; openArt = null;
+  const T = c.T, A = artistsFor(range) || c.A, s = hist ? S[range] : null; curA = A;
+  $('#upd').textContent = 'Updated\n' + new Date(updatedAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+  const songs = s ? s.top.slice(0, settings.songs).map(e => { const [, name, artist, id] = hist.t[e.i];
+    const ids = canon().ids.get(e.i) || [id];
+    return { name, artist, id, ids, art: ids.map(x => art[x]).find(Boolean), link: id ? 'https://open.spotify.com/track/' + id : '#', artists: [artist], ix: e.i, plays: e.plays, mins: e.ms / 6e4, badge: fmt(e.plays) + (e.plays === 1 ? ' play' : ' plays') }; }) : T.slice(0, settings.songs).map(norm);
+  curSongs = songs;
+  if (!songs.length) { out.innerHTML = '<p class="note">Not enough listening history for this range yet.</p>'; return; }
+  const S_ = s;
+  const G = genreStats(range, A);
+  const t3 = topArtists(songs), top = songs[0];
+  const asOf = S_ ? `Data through ${new Date(S_.anchor * 864e5).toLocaleDateString(undefined, { dateStyle: 'medium', timeZone: 'UTC' })}` : '';
+
+  const uA = S_ ? artStats(range) : null, A12 = A.slice(0, 12), aTop = uA && A12[0] ? (uA.get(A12[0].name)?.p || 0) : 0, sTop = songs[0].plays || 0;
+  let strk = null; try { if (hist) strk = records().cur.n; } catch {}
+  kpiData = { min: S_ ? Math.round(S_.minutes) : null, plays: S_ ? S_.plays : null, strk };
+  const nA = S_ ? uA.size : A.length, num = n => `<b data-n="${n}">0</b>`;
+  const kpi = (i, l, v, sub) => `<div class="kpi" style="--i:${i}"><small>${l}</small>${v}<em>${sub}</em></div>`;
+  const pct = (v, m, i, n) => m ? Math.min(100, Math.round(v / m * 100)) : Math.round((n - i) / n * 100);
+  const sRow = (x, i) => row(x, i, i + 1, { cls: i < 3 ? 'pod' : 'bar', p: pct(x.plays || 0, sTop, i, songs.length) });
+  const aRow = (a, i) => { const e = uA?.get(a.name), li = i < 3 ? i : i - 3, pc = e ? pct(e.p, aTop, i, A12.length) : pct(0, 0, i, A12.length);
+    const cnt = e ? `<span class="cnt"><span class="pl">${fmt(e.p)} ${e.p === 1 ? 'play' : 'plays'}</span><span class="sub">${fmt(e.ms / 6e4)} min</span></span>` : '';
+    return `<figure class="af" style="--i:${i};--p:${pc}%;order:${li * 2 + 1};--pic:url(${esc(img(a))});--ls:${lsz(a.name)}" data-k="${reg({ a })}" data-ini="${esc(a.name || '?')}"><div class="ahd" role="button" tabindex="0" aria-expanded="false"><span class="rk">${i + 1}</span><img src="${esc(img(a))}" alt="" loading="lazy"><figcaption>${esc(a.name)}</figcaption>${cnt}<i class="chev"></i></div><div class="ad"></div></figure>`; };
+  out.innerHTML = `<div class="kpis">
+      ${kpi(0, 'Total minutes', S_ ? num(S_.minutes) : '<b>–</b>', S_ ? fmt(S_.minutes / 60) + ' hours' : '<a href="#import" id="goImp">Add history</a> for exact minutes')}
+      ${kpi(1, 'Total plays', S_ ? num(S_.plays) : '<b>–</b>', S_ ? asOf : 'needs streaming history')}
+      ${kpi(2, 'Unique artists', num(nA), S_ ? 'you listened to' : 'in your top list')}
+      ${kpi(3, 'Listening streak', strk == null ? '<b>–</b>' : num(strk), strk == null ? 'needs streaming history' : (strk === 1 ? 'day' : 'days') + ' in a row')}
+    </div>
+    <div class="kact"><button class="btn tonal sm" id="shareBtn">Share recap</button></div>
+    ${hist ? gapNote(range) : ''}
+    <div class="view" data-v="tracks">
+      <section id="songsSec"><h3>Top ${songs.length} songs</h3><ol class="podium">${songs.slice(0, 3).map(sRow).join('')}</ol><ol class="two">${songs.slice(3).map((x, i) => sRow(x, i + 3)).join('')}</ol></section>
+      ${insights(range)}
+      ${calendarHtml()}
+      <section id="recentSec"><h3>Recently played</h3><ol>${(recent?.items || []).slice(0, 10).map((x, i) => row({ ...norm(x.track), badge: x.played_at ? ago(x.played_at) : '' }, i, 0)).join('')}</ol></section>
+    </div>
+    <div class="view" data-v="artists">
+      <div class="stats"><div class="card c5" style="--i:0"><small>Most-featured artists</small><ol class="t3">${t3.map(([n, c]) => `<li><span>${esc(n)}</span><em>${c}</em></li>`).join('')}</ol><small>songs in your top ${songs.length}</small></div></div>
+      <section><h3>Top artists</h3><div class="apod">${A12.slice(0, 3).map(aRow).join('')}</div><div class="alist">${A12.slice(3).map((a, i) => aRow(a, i + 3)).join('')}</div></section>
+    </div>
+    <div class="view" data-v="genres">
+      <div class="stats"><div class="card c3" id="gCard" style="--i:0">${gCardHtml(G)}</div></div>
+      <section id="gSec"${G.list.length ? '' : ' hidden'}><h3>Top genres</h3><div class="bars" id="gBars">${gBarsHtml(G)}</div></section>
+    </div>`;
+  calEnd(); topArt = top.art || img(A[0]) || ''; if (!np) accentFrom(topArt);
+  out.querySelectorAll('b[data-n]').forEach(countUp);
+  out.querySelectorAll('.row img').forEach(tintImg);
+  prefetch(wanted(range));
+  A.slice(0, 12).forEach(a => { palette(img(a)); ensureLFM(a.name); ensureMB(a.name); });
+  G.ws.forEach(([n]) => { ensureLFM(n); ensureMB(n); });
+}
+
+async function showApp() {
+  $('#app').classList.remove('hidden'); moveInd();
+  try {
+    const me = await api('/me'); $('#who').textContent = me.display_name || '';
+    const a = img(me); if (a) { $('#avatar').src = a; $('#avatar').classList.remove('hidden'); }
+  } catch (e) { if (e.message === 'auth') return logout(); }
+  loadAll(); pollNp();
+}
+
+// ---- Now playing: only visible while something is playing ----
+let np = null, npId = '', npDenied = false, npTick = 0;
+async function pollNp() {
+  if (npDenied || document.hidden || Date.now() < coolUntil || $('#app').classList.contains('hidden')) return;
+  try {
+    const t = await getToken(); if (!t) return;
+    const r = await fetch('https://api.spotify.com/v1/me/player/currently-playing', { headers: { Authorization: 'Bearer ' + t } });
+    if (r.status === 401 || r.status === 403) { npDenied = true; np = null; $('#npNote').classList.remove('hidden'); }
+    else if (r.status === 200) { const d = await r.json().catch(() => null); np = d && d.is_playing && d.item && d.currently_playing_type === 'track' ? { t: d.item, p: d.progress_ms || 0, at: Date.now() } : null; }
+    else np = null;
+  } catch {}
+  paintNp();
+}
+function paintNp() {
+  const el = $('#np'); if (!np) { el.classList.add('hidden'); npId = ''; accentFrom(topArt); return; }
+  const t = np.t, pos = Math.min(np.p + Date.now() - np.at, t.duration_ms);
+  if (npId !== t.id) {
+    npId = t.id; const a = img(t.album); accentFrom(a);
+    el.href = t.external_urls?.spotify || '#';
+    el.innerHTML = `${a ? `<img src="${esc(a)}" alt="">` : ''}<div class="nt"><div class="nl"><span class="eq"><i></i><i></i><i></i></span>Listening now</div><div class="tt">${esc(t.name)}</div><div class="ta">${esc(t.artists.map(x => x.name).join(', '))}</div><div class="pg"><i></i></div></div>`;
+  }
+  el.classList.remove('hidden'); el.querySelector('.pg i').style.width = (pos / (t.duration_ms || 1) * 100) + '%';
+}
+setInterval(() => { if (np) paintNp(); if (++npTick % 60 === 0) pollNp(); }, 1000);
+document.addEventListener('visibilitychange', () => !document.hidden && pollNp());
+
+// ---- Boot ----
+document.querySelectorAll('.range button').forEach(b => b.onclick = () => {
+  range = b.dataset.r; document.querySelectorAll('.range button').forEach(x => x.setAttribute('aria-pressed', x === b)); moveInd(); b.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' }); render();
+});
+addEventListener('resize', () => !$('#app').classList.contains('hidden') && moveInd());
+$('#fileLbl').onkeydown = e => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), $('#file').click());
+$('#file').onchange = async e => {
+  try { await importFiles([...e.target.files]); } catch (err) { $('#impText').textContent = err.message; return; }
+  e.target.value = ''; rebuild(); $('#settings').close();
+};
+$('#clear').onclick = async () => { hist = null; await idb.del('hist'); rebuild(); };
+$('#dl').onclick = () => { const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([JSON.stringify({ tally: 1, ...hist })], { type: 'application/json' })); a.download = 'tally-history.json'; a.click(); };
+const VIEWS = ['tracks', 'artists', 'genres'];
+function setView(v) {
+  const st = $('#stats'), cur = st.dataset.view; if (v === cur) return;
+  document.querySelectorAll('.views button').forEach(x => x.setAttribute('aria-pressed', x.dataset.v === v));
+  closeArt(); st.dataset.view = v; if (v === 'tracks') calEnd();
+  const el = document.querySelector(`#stats .view[data-v=${v}]`);
+  if (el && !(settings.calm || matchMedia('(prefers-reduced-motion:reduce)').matches)) el.animate([{ opacity: 0, transform: `translateX(${(VIEWS.indexOf(v) > VIEWS.indexOf(cur) ? 1 : -1) * 36}px)` }, { opacity: 1, transform: 'none' }], { duration: 320, easing: 'cubic-bezier(.2,.8,.2,1)' });
+}
+function goView(v) {
+  setView(v);
+  const el = document.querySelector(`#stats .view[data-v=${v}]`), y = el.getBoundingClientRect().top + scrollY - $('#tools').offsetHeight - 12;
+  if (scrollY > y) scrollTo({ top: Math.max(0, y) });
+}
+document.querySelectorAll('.views button').forEach(b => b.onclick = () => goView(b.dataset.v));
+let sw = null;
+$('#stats').addEventListener('touchstart', e => { const t = e.touches[0]; sw = e.touches.length === 1 && !e.target.closest('.cscroll,.bch,input,.bars') ? { x: t.clientX, y: t.clientY } : null; }, { passive: true });
+$('#stats').addEventListener('touchend', e => {
+  if (!sw) return; const t = e.changedTouches[0], dx = t.clientX - sw.x, dy = t.clientY - sw.y; sw = null;
+  if (Math.abs(dx) < 70 || Math.abs(dx) < Math.abs(dy) * 1.8) return;
+  const n = VIEWS[VIEWS.indexOf($('#stats').dataset.view) + (dx < 0 ? 1 : -1)]; if (n) goView(n);
+}, { passive: true });
+$('#stats').addEventListener('click', e => {
+  if (e.target.closest('#shareBtn')) return shareRecap();
+  const cd = e.target.closest('.cd[data-k]'); if (!cd) return;
+  document.querySelectorAll('.cd.sel').forEach(n => n.classList.remove('sel')); cd.classList.add('sel');
+  const ms = +cd.dataset.m; $('#calInfo').textContent = dateOf(+cd.dataset.k) + ' · ' + (ms ? fmt(ms / 6e4) + ' min' : 'no listening');
+});
+const jb = $('#jumpBtn'), jm = $('#jumpMenu'), jumpClose = () => { jm.hidden = true; jb.setAttribute('aria-expanded', 'false'); };
+jb.onclick = e => { e.stopPropagation(); const open = jm.hidden; jm.hidden = !open; jb.setAttribute('aria-expanded', String(open)); };
+document.addEventListener('click', e => { if (!jm.hidden && !e.target.closest('#jumpMenu,#jumpBtn')) jumpClose(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') jumpClose(); });
+jm.onclick = e => {
+  const b = e.target.closest('button[data-t]'); if (!b) return; jumpClose(); setView('tracks');
+  requestAnimationFrame(() => ($('#' + b.dataset.t) || $('#insSec') || $('#songsSec'))?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+};
+let cmpRaf = 0;
+addEventListener('scroll', () => { if (cmpRaf) return; cmpRaf = requestAnimationFrame(() => { cmpRaf = 0; $('#tools').classList.toggle('compact', scrollY > 90); }); }, { passive: true });
+$('#syncToggle').onclick = () => {
+  if (sync.on()) { sync.disconnect(); importUi(); } else $('#syncForm').classList.toggle('hidden');
+};
+$('#lfmSave').onclick = () => {
+  const k = $('#lfmKey').value.trim(); if (k) ls.set('lfmKey', k); else ls.del('lfmKey');
+  info.l = {}; info.lt = {}; idb.set('info', info); lfmUi(); if (k) { const A = cache[range]?.A || []; A.slice(0, 12).forEach(a => ensureLFM(a.name)); }
+};
+$('#syncTest').onclick = async () => {
+  $('#syncText').textContent = 'Checking…';
+  try {
+    const d = await sync.call('/plays?after=0'), p = d.plays || [], newest = p.reduce((m, x) => Math.max(m, x[0]), 0);
+    sync.msg = p.length ? `The worker has logged ${fmt(p.length)} plays since it was set up. The newest was ${new Date(newest).toLocaleString()}.` : 'The worker is reachable but has logged no plays yet. Check that its scheduled trigger is on and that setup succeeded.';
+    if (hist) { const n = await mergePlays(p); if (n) { sync.msg += ` ${n} were missing here and are now added.`; rebuild(); } }
+  } catch (e) { sync.msg = 'Problem: ' + e.message; }
+  importUi();
+};
+$('#syncGo').onclick = async () => {
+  $('#syncText').textContent = 'Connecting…';
+  try { await sync.connect($('#syncUrl').value, $('#syncKey').value); $('#syncForm').classList.add('hidden'); loadAll(); }
+  catch (e) { sync.disconnect(); $('#syncText').textContent = e.message; }
+};
+$('#loginBtn').onclick = login; $('#logout').onclick = logout;
+$('#openSet').onclick = () => { buildSettingsUI(); document.documentElement.classList.add('lock'); $('#settings').showModal(); };
+$('#settings').addEventListener('close', () => document.documentElement.classList.remove('lock'));
+$('#stats').onclick = e => { if (e.target.closest('#goImp')) { e.preventDefault(); $('#openSet').click(); return; } const bc = e.target.closest('.bc[data-ck]'); if (bc) return pickClock(bc.dataset.ck); const r = e.target.closest('.rh'); if (r) return toggleRow(r.parentElement); const f = e.target.closest('.ahd'); if (f) toggleArtist(f.parentElement); };
+document.addEventListener('click', e => { if (openArt && !e.target.closest('.af')) closeArt(); });
+$('#stats').onkeydown = e => { if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('.rh,.ahd,.bc')) { e.preventDefault(); e.target.click(); } };
+$('#stClose').onclick = () => $('#settings').close();
+$('#settings').onclick = e => e.target.id === 'settings' && e.target.close();
+$('#stBody').onclick = e => {
+  const b = e.target.closest('button'); if (!b) return;
+  const k = b.parentElement.dataset.k, o = OPTS.find(x => x[0] === k)[2].find(x => String(x[0]) === b.dataset.v);
+  settings[k] = o[0]; saveSettings();
+};
+$('#resetSet').onclick = () => { settings = { ...DEF }; saveSettings(); };
+// ---- One update every 30 minutes (this also logs recent plays), never more often ----
+const CYCLE = 30 * 6e4;
+const due = () => !loading && lastTry && Date.now() - lastTry >= CYCLE && !document.hidden && !$('#app').classList.contains('hidden');
+setInterval(() => due() && loadAll(), 6e4); // checks once a minute; only updates when 30 minutes have passed since the last attempt
+document.addEventListener('visibilitychange', () => { if (settings.auto && due()) loadAll(); });
+
+(async function init() {
+  applySettings(); buildSettingsUI(); lfmUi();
+  Object.assign(info, (await idb.get('info')) || {});
+  for (const k of ['t', 'a', 'm', 'l', 'lt']) for (const id in info[k]) if (info[k][id]?.fail) delete info[k][id];
+  if (ls.get('cid') !== CLIENT_ID) ['access', 'expires', 'refresh'].forEach(ls.del); // saved sign-in belongs to a different Spotify app: sign in again
+  hist = await idb.get('hist'); if (!hist) try { hist = JSON.parse(ls.get('hist') || 'null'); } catch {}
+  const q = new URLSearchParams(location.search);
+  if (q.get('error')) { history.replaceState({}, '', REDIRECT); $('#login').classList.remove('hidden'); $('#err').textContent = 'Spotify sign-in was cancelled.'; return; }
+  if (q.get('code')) {
+    try { await tokenRequest({ grant_type: 'authorization_code', code: q.get('code'), redirect_uri: REDIRECT, code_verifier: ls.get('verifier') }); ls.del('verifier'); }
+    catch (e) { history.replaceState({}, '', REDIRECT); $('#login').classList.remove('hidden'); $('#err').textContent = e.message; return; }
+    history.replaceState({}, '', REDIRECT);
+  }
+  if (ls.get('access') || ls.get('refresh')) showApp(); else $('#login').classList.remove('hidden');
+})();
+</script>
+</body>
+</html>
